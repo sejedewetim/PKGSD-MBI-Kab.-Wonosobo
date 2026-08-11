@@ -10,6 +10,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
+    <!-- Excel Parser Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -320,9 +323,20 @@
 
         // Global Firebase Configuration Setup
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'pkgsd-mbi-lms-v2';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "mock-key", authDomain: "mock.firebaseapp.com", projectId: "mock-proj", storageBucket: "mock.appspot.com", messagingSenderId: "123", appId: "1:123:web:123"
+        
+        // Menggunakan Konfigurasi Firebase Asli Pengguna untuk sinkronisasi di GitHub/Hosting lain
+        const fallbackConfig = {
+            apiKey: "AIzaSyDylIGbMZDQQrYeVFGw-RPtls7Y2Ch6KNI",
+            authDomain: "pkgsd-mbi-kab-wonosobo.firebaseapp.com",
+            projectId: "pkgsd-mbi-kab-wonosobo",
+            storageBucket: "pkgsd-mbi-kab-wonosobo.firebasestorage.app",
+            messagingSenderId: "636215003649",
+            appId: "1:636215003649:web:df62e747ca999755fe8e00",
+            measurementId: "G-3Y3WBBEJXC"
         };
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : fallbackConfig;
+        
         let app, db, auth, storage;
         try {
             app = initializeApp(firebaseConfig);
@@ -343,7 +357,9 @@
             allUsers: [], // All registered participants & fasil
             activeTab: 'materi',
             searchParticipantQuery: '',
-            unsubscribers: []
+            unsubscribers: [],
+            editingMaterialId: null, // Track edited material
+            editingTaskId: null      // Track edited task
         };
 
         // Utility: Custom Toast Notifications
@@ -528,7 +544,7 @@
                 snapshot.forEach(d => state.assignments.push({ id: d.id, ...d.data() }));
                 state.assignments.sort((a, b) => b.createdAt - a.createdAt);
                 renderDashboardHeaderAndStats();
-                if (['tugas', 'penilaian', 'progres'].includes(state.activeTab)) renderActiveTab();
+                if (['materi', 'tugas', 'penilaian', 'progres'].includes(state.activeTab)) renderActiveTab();
             }, (err) => console.error("Sync Assignments error:", err));
 
             // Sync Submissions
@@ -536,7 +552,7 @@
                 state.submissions = [];
                 snapshot.forEach(d => state.submissions.push({ id: d.id, ...d.data() }));
                 renderDashboardHeaderAndStats();
-                if (['tugas', 'penilaian', 'progres', 'peserta'].includes(state.activeTab)) renderActiveTab();
+                if (['materi', 'tugas', 'penilaian', 'progres', 'peserta'].includes(state.activeTab)) renderActiveTab();
             }, (err) => console.error("Sync Submissions error:", err));
 
             // Sync Users (All Participants and Fasilitators)
@@ -573,8 +589,7 @@
 
             const tabs = [];
             if (state.profile.role === 'peserta') {
-                tabs.push({ id: 'materi', label: 'Modul Materi', icon: '📖' });
-                tabs.push({ id: 'tugas', label: 'Tugas & Evaluasi', icon: '📝' });
+                tabs.push({ id: 'materi', label: 'Modul & Penugasan', icon: '📚' });
                 tabs.push({ id: 'progres', label: 'Progres & Nilai Saya', icon: '📊' });
             } else {
                 tabs.push({ id: 'materi', label: 'Manajemen Materi', icon: '📚' });
@@ -611,7 +626,6 @@
             if (state.profile.role === 'peserta') {
                 const mySubs = state.submissions.filter(s => s.studentId === state.profile.uid);
                 const graded = mySubs.filter(s => s.grade !== null);
-                const avg = graded.length ? (graded.reduce((acc, c) => acc + Number(c.grade), 0) / graded.length).toFixed(1) : '-';
 
                 html = `
                     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
@@ -631,15 +645,15 @@
                     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
                         <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg">✅</div>
                         <div>
-                            <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tugas Dinilai</p>
+                            <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tugas Dikoreksi</p>
                             <h4 class="text-xl font-bold text-navy-900">${graded.length} Tugas</h4>
                         </div>
                     </div>
                     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg">⭐</div>
+                        <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg">⏳</div>
                         <div>
-                            <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Rata-rata Nilai</p>
-                            <h4 class="text-xl font-bold text-navy-900">${avg}</h4>
+                            <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Belum Dikerjakan</p>
+                            <h4 class="text-xl font-bold text-navy-900">${state.assignments.length - mySubs.length} Tugas</h4>
                         </div>
                     </div>
                 `;
@@ -697,43 +711,154 @@
                 if (state.activeTab === 'adminfasil') renderFasilitatorAdmin(container);
             }
         }
+        
+        // Mengekspos fungsi ke global agar bisa dipanggil oleh onclick HTML
+        window.renderActiveTab = renderActiveTab;
 
         /* ======================== PESERTA VIEWS ======================== */
 
         function renderPesertaMateri(container) {
             let html = `
                 <div class="mb-6">
-                    <h2 class="text-2xl font-serif font-bold text-navy-900">Modul Pembelajaran Bahasa Inggris SD</h2>
-                    <p class="text-slate-500 text-sm mt-1">Pelajari materi dan strategi pengajaran di bawah ini secara mandiri.</p>
+                    <h2 class="text-2xl font-serif font-bold text-navy-900">Modul & Tugas Pembelajaran</h2>
+                    <p class="text-slate-500 text-sm mt-1">Pelajari materi dan selesaikan tugas praktik Anda secara berurutan di bawah ini.</p>
                 </div>
+                <div class="space-y-6">
             `;
 
-            if (state.materials.length === 0) {
-                html += `<div class="text-center py-16 bg-white rounded-2xl border border-slate-200"><p class="text-slate-400 text-sm">Belum ada modul materi yang diunggah fasilitator.</p></div>`;
+            // Menggabungkan Materi dan Tugas menjadi satu array (Timeline Berurutan)
+            const combined = [
+                ...state.materials.map(m => ({ ...m, itemType: 'material' })),
+                ...state.assignments.map(a => ({ ...a, itemType: 'assignment' }))
+            ];
+            
+            // Mengurutkan berdasarkan waktu terbaru (Descending)
+            combined.sort((a, b) => b.createdAt - a.createdAt);
+
+            if (combined.length === 0) {
+                html += `<div class="text-center py-16 bg-white rounded-2xl border border-slate-200"><p class="text-slate-400 text-sm">Belum ada modul materi atau tugas yang diunggah.</p></div>`;
             } else {
-                html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`;
-                state.materials.forEach(mat => {
-                    const dateStr = new Date(mat.createdAt).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'});
+                // Group by Unit / Fokus Materi
+                const grouped = {};
+                combined.forEach(item => {
+                    const unitName = item.unit || 'Fokus Materi Umum';
+                    if (!grouped[unitName]) grouped[unitName] = [];
+                    grouped[unitName].push(item);
+                });
+
+                Object.keys(grouped).forEach(unitName => {
                     html += `
-                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all flex flex-col">
-                            <div class="h-32 navy-gradient p-6 relative flex flex-col justify-between">
-                                <span class="self-start px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gold-400 text-navy-900 uppercase tracking-wider">
-                                    ${mat.type === 'document' ? '📎 File Dokumen' : '📖 Modul Teks'}
-                                </span>
-                                <h3 class="text-white font-serif font-bold text-lg line-clamp-2">${mat.title}</h3>
+                        <div class="mt-10 mb-2 border-b border-gold-400 pb-3 flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl gold-gradient flex items-center justify-center text-navy-900 font-bold shadow-md">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                             </div>
-                            <div class="p-6 flex-grow flex flex-col">
-                                <p class="text-xs text-slate-400 mb-3">Diunggah: ${dateStr}</p>
-                                <p class="text-xs text-slate-600 mb-6 line-clamp-3 leading-relaxed">${mat.description || 'Klik tombol di bawah untuk mempelajari isi materi selengkapnya.'}</p>
-                                <button onclick="viewMaterialDetail('${mat.id}')" class="mt-auto w-full py-2.5 bg-slate-100 hover:bg-gold-400 text-navy-900 font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-2">
-                                    <span>${mat.type === 'document' ? 'Unduh / Lihat Dokumen' : 'Baca Modul Lengkap'}</span> &rarr;
-                                </button>
-                            </div>
+                            <h3 class="text-xl font-serif font-bold text-navy-900 uppercase tracking-wider">${unitName}</h3>
                         </div>
                     `;
+
+                    grouped[unitName].forEach(item => {
+                        if (item.itemType === 'material') {
+                            // Tampilan Desain untuk Modul Materi
+                            const dateStr = new Date(item.createdAt).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'});
+                            const iconType = item.type === 'document' ? '📎 File Dokumen' : '📚 Modul Materi';
+                            
+                            html += `
+                                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-gold-100 text-gold-700 uppercase tracking-wider">${iconType}</span>
+                                            <span class="text-xs text-slate-500 font-medium">${dateStr}</span>
+                                        </div>
+                                        <h3 class="text-xl font-serif font-bold text-navy-900 mb-2">${item.title}</h3>
+                                        <p class="text-sm text-slate-600 line-clamp-2">${item.description}</p>
+                                    </div>
+                                    <button onclick="viewMaterialDetail('${item.id}')" class="shrink-0 px-6 py-2.5 bg-navy-50 text-navy-900 hover:bg-navy-100 font-bold text-xs rounded-xl transition-colors border border-navy-100 shadow-sm flex items-center gap-2">
+                                        Buka Materi
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    </button>
+                                </div>
+                            `;
+                        } else if (item.itemType === 'assignment') {
+                            // Tampilan Desain untuk Penugasan (Form Upload & Teks)
+                            const task = item;
+                            const submission = state.submissions.find(s => s.assignmentId === task.id && s.studentId === state.profile.uid);
+                            const statusText = submission ? (submission.grade !== null ? 'Sudah Dikoreksi' : 'Terkumpul (Menunggu Koreksi)') : 'Belum Dikerjakan';
+                            const statusClass = submission ? (submission.grade !== null ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800') : 'bg-amber-100 text-amber-800';
+                            const deadlineStr = new Date(task.deadline).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
+                            const taskType = task.type || 'text';
+
+                            html += `
+                                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+                                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-100">
+                                        <div>
+                                            <div class="flex items-center gap-3">
+                                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-navy-100 text-navy-800 uppercase tracking-wider">
+                                                    ${taskType === 'upload' ? '📎 Tugas File' : '📝 Tugas Teks'}
+                                                </span>
+                                                <h3 class="text-xl font-serif font-bold text-navy-900">${task.title}</h3>
+                                                <span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span>
+                                            </div>
+                                            <p class="text-xs text-rose-600 font-semibold mt-2">Batas Pengumpulan: ${deadlineStr}</p>
+                                        </div>
+                                    </div>
+
+                                <p class="text-slate-700 text-sm whitespace-pre-wrap leading-relaxed mb-6">${task.description}</p>
+
+                                ${submission ? `
+                                    <div class="p-5 bg-slate-50 rounded-xl border border-slate-200">
+                                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Jawaban / Karya Anda:</h4>
+                                        
+                                        ${submission.fileUrl ? `
+                                            <div class="mb-3 p-3 bg-white border border-slate-200 rounded-lg flex items-center gap-3">
+                                                <div class="w-10 h-10 rounded bg-navy-50 text-navy-600 flex items-center justify-center">📎</div>
+                                                <div class="flex-grow overflow-hidden">
+                                                    <p class="font-bold text-sm text-navy-900 truncate">${submission.fileName}</p>
+                                                    <a href="${submission.fileUrl}" target="_blank" class="text-xs text-blue-600 hover:underline font-semibold">Lihat / Unduh File</a>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        
+                                        ${submission.answer ? `<p class="text-sm text-slate-800 bg-white p-4 rounded-lg border border-slate-200 whitespace-pre-wrap">${submission.answer}</p>` : ''}
+                                        
+                                        ${submission.grade !== null ? `
+                                            <div class="mt-4 pt-4 border-t border-slate-200">
+                                                <div>
+                                                    <h5 class="text-xs font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-2 mb-2">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                        Tugas Telah Dikoreksi
+                                                    </h5>
+                                                    <h5 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Catatan & Umpan Balik Fasilitator:</h5>
+                                                    <p class="text-sm text-navy-900 italic mt-1 font-serif">"${submission.feedback || 'Tidak ada catatan khusus.'}"</p>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                ` : `
+                                    <div class="mt-4 p-5 bg-slate-50 rounded-xl border border-slate-200">
+                                        <label class="block text-xs font-bold text-navy-900 uppercase tracking-wider mb-3">Kumpulkan Jawaban Anda</label>
+                                        
+                                        ${taskType === 'upload' ? `
+                                            <div class="mb-4">
+                                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Pilih File (Dokumen / Video)</label>
+                                                <input type="file" id="file-${task.id}" class="w-full p-2 border border-slate-300 rounded-xl text-sm bg-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-navy-50 file:text-navy-900 hover:file:bg-navy-100 cursor-pointer">
+                                            </div>
+                                            <textarea id="answer-${task.id}" rows="2" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm bg-white" placeholder="Catatan tambahan (Opsional)..."></textarea>
+                                        ` : `
+                                            <textarea id="answer-${task.id}" rows="4" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm bg-white" placeholder="Tuliskan teks jawaban atau sertakan link (seperti Google Drive / YouTube) karya pengajaran Anda..."></textarea>
+                                        `}
+                                        
+                                        <button id="btn-submit-${task.id}" onclick="submitAssignment('${task.id}', '${taskType}')" class="mt-4 px-6 py-2.5 navy-gradient text-white text-xs font-bold rounded-xl shadow hover:opacity-90 transition-all flex items-center gap-2">
+                                            <span>Kirimkan Tugas</span>
+                                        </button>
+                                    </div>
+                                `}
+                            </div>
+                        `;
+                    }
+                    });
                 });
-                html += `</div>`;
             }
+            html += `</div>`;
             container.innerHTML = html;
         }
 
@@ -943,7 +1068,7 @@
             
             let html = `
                 <div class="mb-6">
-                    <h2 class="text-2xl font-serif font-bold text-navy-900">Rekapitulasi Nilai & Hasil Belajar</h2>
+                    <h2 class="text-2xl font-serif font-bold text-navy-900">Rekapitulasi Progres Belajar</h2>
                     <p class="text-slate-500 text-sm mt-1">Laporan progres evaluasi kompetensi Anda selama program.</p>
                 </div>
 
@@ -951,30 +1076,30 @@
                     <table class="min-w-full divide-y divide-slate-200">
                         <thead class="bg-slate-50">
                             <tr>
-                                <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Judul Tugas</th>
-                                <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Nilai Akhir</th>
-                                <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Catatan Fasilitator</th>
+                                <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Judul Tugas & Fokus Materi</th>
+                                <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status Evaluasi</th>
+                                <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Catatan / Umpan Balik Fasilitator</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
             `;
 
             if (state.assignments.length === 0) {
-                html += `<tr><td colspan="4" class="px-6 py-10 text-center text-slate-400 text-sm">Belum ada tugas.</td></tr>`;
+                html += `<tr><td colspan="3" class="px-6 py-10 text-center text-slate-400 text-sm">Belum ada tugas.</td></tr>`;
             } else {
                 state.assignments.forEach(task => {
                     const sub = mySubs.find(s => s.assignmentId === task.id);
-                    const statusText = sub ? (sub.grade !== null ? 'Lengkap' : 'Menunggu Koreksi') : 'Belum Mengirim';
-                    const gradeVal = sub && sub.grade !== null ? sub.grade : '-';
+                    const statusText = sub ? (sub.grade !== null ? 'Sudah Dikoreksi' : 'Menunggu Koreksi') : 'Belum Mengirim';
 
                     html += `
                         <tr class="hover:bg-slate-50">
-                            <td class="px-6 py-4 text-sm font-semibold text-navy-900 font-serif">${task.title}</td>
-                            <td class="px-6 py-4 text-xs font-medium">
-                                <span class="px-2.5 py-1 rounded-full ${sub ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-500'}">${statusText}</span>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-semibold text-navy-900 font-serif">${task.title}</div>
+                                <div class="text-[10px] text-slate-500 mt-1 uppercase font-bold">${task.unit || 'Materi Umum'}</div>
                             </td>
-                            <td class="px-6 py-4 text-center font-bold font-serif text-lg text-navy-900">${gradeVal}</td>
+                            <td class="px-6 py-4 text-xs font-medium">
+                                <span class="px-2.5 py-1 rounded-full ${sub ? (sub.grade !== null ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700') : 'bg-slate-100 text-slate-500'}">${statusText}</span>
+                            </td>
                             <td class="px-6 py-4 text-xs text-slate-600 italic">${(sub && sub.feedback) ? sub.feedback : '-'}</td>
                         </tr>
                     `;
@@ -994,7 +1119,7 @@
                         <h2 class="text-2xl font-serif font-bold text-navy-900">Manajemen Modul Materi</h2>
                         <p class="text-slate-500 text-sm mt-1">Buat, perbarui, dan bagikan materi pengajaran untuk peserta.</p>
                     </div>
-                    <button onclick="toggleForm('form-materi')" class="px-5 py-2.5 gold-gradient text-navy-900 font-bold text-xs rounded-xl shadow-md hover:opacity-90 transition-all flex items-center gap-2">
+                    <button onclick="resetMaterialForm(); toggleForm('form-materi')" class="px-5 py-2.5 gold-gradient text-navy-900 font-bold text-xs rounded-xl shadow-md hover:opacity-90 transition-all flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         <span>Tambah Modul Baru</span>
                     </button>
@@ -1002,13 +1127,13 @@
 
                 <!-- Form Modul Baru -->
                 <div id="form-materi" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
-                    <h3 class="text-lg font-serif font-bold text-navy-900 mb-4">Input Modul Pembelajaran Baru</h3>
+                    <h3 id="form-materi-title" class="text-lg font-serif font-bold text-navy-900 mb-4">Input Modul Pembelajaran Baru</h3>
                     
                     <!-- Pilihan Tipe Materi -->
                     <div class="flex flex-wrap gap-4 mb-5 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                         <label class="flex items-center gap-2 text-xs font-bold text-navy-900 cursor-pointer">
                             <input type="radio" name="mat-type" value="manual" checked onchange="toggleMatType()" class="text-gold-500 focus:ring-gold-500 w-4 h-4"> 
-                            📝 Tulis Manual & Gambar
+                            📝 Tulis Manual & Gambar/Video
                         </label>
                         <label class="flex items-center gap-2 text-xs font-bold text-navy-900 cursor-pointer">
                             <input type="radio" name="mat-type" value="document" onchange="toggleMatType()" class="text-gold-500 focus:ring-gold-500 w-4 h-4"> 
@@ -1017,6 +1142,7 @@
                     </div>
 
                     <div class="space-y-4">
+                        <input type="text" id="mat-unit" placeholder="Fokus Materi / Unit (Contoh: Unit 1 - Dasar Pedagogi)" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm font-semibold text-navy-900 bg-gold-50/50">
                         <input type="text" id="mat-title" placeholder="Judul Modul (Misal: Modul 1 - Teaching Vocabulary for Young Learners)" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm">
                         <input type="text" id="mat-desc" placeholder="Ringkasan Singkat Modul..." class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm">
                         
@@ -1025,6 +1151,7 @@
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Unggah Media Pendukung (Gambar / Video / Audio) Opsional</label>
                                 <input type="file" id="mat-media" accept="image/*,video/*,audio/*" class="w-full p-2 border border-slate-300 rounded-xl text-sm bg-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-navy-50 file:text-navy-900 hover:file:bg-navy-100 cursor-pointer">
+                                <p id="mat-media-hint" class="text-[10px] text-slate-400 mt-1 hidden">Kosongkan jika tidak ingin mengubah file media saat ini.</p>
                             </div>
                             <textarea id="mat-content" rows="6" placeholder="Isi Materi Pembelajaran Lengkap..." class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm"></textarea>
                         </div>
@@ -1034,6 +1161,7 @@
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Pilih File Dokumen Materi (PDF, Word, PPT)</label>
                                 <input type="file" id="mat-file" accept=".pdf,.doc,.docx,.ppt,.pptx" class="w-full p-2 border border-slate-300 rounded-xl text-sm bg-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-gold-100 file:text-gold-700 hover:file:bg-gold-200 cursor-pointer">
+                                <p id="mat-file-hint" class="text-[10px] text-slate-400 mt-1 hidden">Kosongkan jika tidak ingin mengubah file dokumen saat ini.</p>
                             </div>
                             <p class="text-[11px] text-amber-700 font-medium bg-amber-50 p-3 rounded-lg border border-amber-200 flex items-center gap-2">
                                 💡 Peserta nantinya dapat langsung mengunduh atau melihat dokumen ini tanpa perlu membaca materi panjang di web.
@@ -1041,7 +1169,7 @@
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="toggleForm('form-materi')" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 rounded-xl">Batal</button>
+                            <button onclick="resetMaterialForm(); toggleForm('form-materi')" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 rounded-xl">Batal</button>
                             <button onclick="saveMaterial()" id="btn-save-mat" class="px-5 py-2.5 navy-gradient text-white font-bold text-xs rounded-xl shadow flex items-center gap-2">
                                 <span>Simpan Modul</span>
                             </button>
@@ -1054,7 +1182,7 @@
                     <table class="min-w-full divide-y divide-slate-200">
                         <thead class="bg-slate-50">
                             <tr>
-                                <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Judul Modul</th>
+                                <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Judul Modul & Unit</th>
                                 <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Tanggal Dibuat</th>
                                 <th class="px-6 py-3.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Aksi</th>
                             </tr>
@@ -1073,12 +1201,13 @@
                         <tr class="hover:bg-slate-50 transition-colors">
                             <td class="px-6 py-4">
                                 <div class="text-sm font-bold text-navy-900 font-serif">${mat.title}</div>
-                                <div class="text-[10px] font-bold text-gold-600 mt-1 uppercase tracking-wide">${iconType}</div>
+                                <div class="text-[10px] font-bold text-gold-600 mt-1 uppercase tracking-wide">${iconType} &bull; ${mat.unit || 'Materi Umum'}</div>
                                 <div class="text-xs text-slate-500 line-clamp-1 mt-1">${mat.description}</div>
                             </td>
                             <td class="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">${date}</td>
                             <td class="px-6 py-4 text-right whitespace-nowrap">
-                                <button onclick="deleteDocHandler('materials', '${mat.id}')" class="text-rose-600 hover:text-rose-800 text-xs font-bold px-3 py-1 bg-rose-50 rounded-lg">Hapus</button>
+                                <button onclick="editMaterial('${mat.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-bold px-3 py-1 bg-blue-50 rounded-lg mr-2 transition-colors">Edit</button>
+                                <button onclick="deleteDocHandler('materials', '${mat.id}')" class="text-rose-600 hover:text-rose-800 text-xs font-bold px-3 py-1 bg-rose-50 rounded-lg transition-colors">Hapus</button>
                             </td>
                         </tr>
                     `;
@@ -1145,9 +1274,57 @@
             }
         };
 
+        window.resetMaterialForm = () => {
+            state.editingMaterialId = null;
+            document.getElementById('form-materi-title').textContent = 'Input Modul Pembelajaran Baru';
+            document.getElementById('mat-unit').value = '';
+            document.getElementById('mat-title').value = '';
+            document.getElementById('mat-desc').value = '';
+            document.getElementById('mat-content').value = '';
+            document.getElementById('mat-media').value = '';
+            document.getElementById('mat-file').value = '';
+            document.getElementById('mat-media-hint').classList.add('hidden');
+            document.getElementById('mat-file-hint').classList.add('hidden');
+            document.getElementById('btn-save-mat').innerHTML = '<span>Simpan Modul</span>';
+        };
+
+        window.editMaterial = (id) => {
+            const mat = state.materials.find(m => m.id === id);
+            if (!mat) return;
+            
+            state.editingMaterialId = id;
+            
+            // Tampilkan form & ubah UI
+            const form = document.getElementById('form-materi');
+            form.classList.remove('hidden');
+            form.scrollIntoView({ behavior: 'smooth' });
+            
+            document.getElementById('form-materi-title').textContent = 'Edit Modul Pembelajaran';
+            document.getElementById('btn-save-mat').innerHTML = '<span>Perbarui Modul</span>';
+            
+            // Isi data ke form
+            document.getElementById('mat-unit').value = mat.unit || '';
+            document.getElementById('mat-title').value = mat.title || '';
+            document.getElementById('mat-desc').value = mat.description || '';
+            
+            const radios = document.getElementsByName('mat-type');
+            for (let r of radios) {
+                if (r.value === mat.type) r.checked = true;
+            }
+            toggleMatType();
+
+            if (mat.type === 'manual') {
+                document.getElementById('mat-content').value = mat.content || '';
+                document.getElementById('mat-media-hint').classList.remove('hidden');
+            } else {
+                document.getElementById('mat-file-hint').classList.remove('hidden');
+            }
+        };
+
         window.saveMaterial = async () => {
             if (!state.user) return;
             const type = document.querySelector('input[name="mat-type"]:checked').value;
+            const unit = document.getElementById('mat-unit').value.trim();
             const title = document.getElementById('mat-title').value.trim();
             const desc = document.getElementById('mat-desc').value.trim();
             const btn = document.getElementById('btn-save-mat');
@@ -1163,6 +1340,9 @@
             let mediaUrl = null;
             let mediaType = null;
             let fileData = null;
+
+            // Dapatkan data lama (jika dalam mode edit)
+            const existingMat = state.editingMaterialId ? state.materials.find(m => m.id === state.editingMaterialId) : null;
 
             if (type === 'manual') {
                 content = document.getElementById('mat-content').value.trim();
@@ -1181,22 +1361,33 @@
                         else if (mediaFile.type.startsWith('audio/')) mediaType = 'audio';
                         else mediaType = 'image';
                     }
+                } else if (existingMat && existingMat.type === 'manual') {
+                    // Jika tidak upload baru, gunakan file media yang lama
+                    mediaUrl = existingMat.mediaUrl || existingMat.imageUrl;
+                    mediaType = existingMat.mediaType || (existingMat.imageUrl ? 'image' : null);
                 }
             } else {
                 const docFile = document.getElementById('mat-file').files[0];
-                if (!docFile) {
+                if (!docFile && !existingMat) {
                     window.showToast('Pilih file dokumen terlebih dahulu', 'error');
                     return;
                 }
-                btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Mengunggah Dokumen...</span>`;
-                btn.disabled = true;
-                fileData = await uploadFile(docFile, 'documents');
+                
+                if (docFile) {
+                    btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Mengunggah Dokumen...</span>`;
+                    btn.disabled = true;
+                    fileData = await uploadFile(docFile, 'documents');
+                } else if (existingMat && existingMat.type === 'document') {
+                    // Jika tidak upload baru, gunakan file doc yang lama
+                    fileData = { url: existingMat.fileUrl, name: existingMat.fileName };
+                }
             }
 
             try {
                 const baseCol = `artifacts/${appId}/public/data/materials`;
-                await addDoc(collection(db, baseCol), {
+                const payload = {
                     type,
+                    unit,
                     title, 
                     description: desc, 
                     content: type === 'manual' ? content : '',
@@ -1205,17 +1396,19 @@
                     mediaType: mediaType,
                     fileUrl: fileData ? fileData.url : null,
                     fileName: fileData ? fileData.name : null,
-                    authorId: state.profile.uid,
-                    createdAt: Date.now()
-                });
-                window.showToast('Modul materi berhasil disimpan!');
+                    authorId: state.profile.uid
+                };
+
+                if (state.editingMaterialId) {
+                    await updateDoc(doc(db, baseCol, state.editingMaterialId), payload);
+                    window.showToast('Modul materi berhasil diperbarui!');
+                } else {
+                    payload.createdAt = Date.now();
+                    await addDoc(collection(db, baseCol), payload);
+                    window.showToast('Modul materi berhasil disimpan!');
+                }
                 
-                // Reset form fields
-                document.getElementById('mat-title').value = '';
-                document.getElementById('mat-desc').value = '';
-                document.getElementById('mat-content').value = '';
-                document.getElementById('mat-media').value = '';
-                document.getElementById('mat-file').value = '';
+                resetMaterialForm();
                 toggleForm('form-materi');
             } catch (e) {
                 console.error(e);
@@ -1233,14 +1426,14 @@
                         <h2 class="text-2xl font-serif font-bold text-navy-900">Manajemen Penugasan</h2>
                         <p class="text-slate-500 text-sm mt-1">Buat tugas praktik mengajar dan instruksi kuis untuk peserta.</p>
                     </div>
-                    <button onclick="toggleForm('form-tugas')" class="px-5 py-2.5 gold-gradient text-navy-900 font-bold text-xs rounded-xl shadow-md hover:opacity-90 transition-all flex items-center gap-2">
+                    <button onclick="resetTaskForm(); toggleForm('form-tugas')" class="px-5 py-2.5 gold-gradient text-navy-900 font-bold text-xs rounded-xl shadow-md hover:opacity-90 transition-all flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         <span>Buat Tugas Baru</span>
                     </button>
                 </div>
 
                 <div id="form-tugas" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
-                    <h3 class="text-lg font-serif font-bold text-navy-900 mb-4">Input Penugasan Baru</h3>
+                    <h3 id="form-tugas-title" class="text-lg font-serif font-bold text-navy-900 mb-4">Input Penugasan Baru</h3>
                     
                     <!-- Pilihan Tipe Tugas -->
                     <div class="flex flex-wrap gap-4 mb-5 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
@@ -1255,6 +1448,7 @@
                     </div>
 
                     <div class="space-y-4">
+                        <input type="text" id="task-unit" placeholder="Fokus Materi / Unit (Contoh: Unit 1 - Dasar Pedagogi)" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm font-semibold text-navy-900 bg-gold-50/50">
                         <input type="text" id="task-title" placeholder="Judul Tugas (Misal: Praktik Microteaching Video SD Class 4)" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm">
                         <textarea id="task-desc" rows="4" placeholder="Instruksi Pengerjaan Tugas..." class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm"></textarea>
                         <div>
@@ -1262,8 +1456,8 @@
                             <input type="date" id="task-deadline" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm">
                         </div>
                         <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="toggleForm('form-tugas')" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 rounded-xl">Batal</button>
-                            <button onclick="saveTask()" class="px-5 py-2.5 navy-gradient text-white font-bold text-xs rounded-xl shadow">Simpan Tugas</button>
+                            <button onclick="resetTaskForm(); toggleForm('form-tugas')" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 rounded-xl">Batal</button>
+                            <button onclick="saveTask()" id="btn-save-task" class="px-5 py-2.5 navy-gradient text-white font-bold text-xs rounded-xl shadow">Simpan Tugas</button>
                         </div>
                     </div>
                 </div>
@@ -1284,7 +1478,7 @@
                         <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
                             <div>
                                 <div class="flex items-center gap-2 mb-1">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 uppercase">${taskTypeIcon}</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 uppercase">${taskTypeIcon} &bull; ${task.unit || 'UMUM'}</span>
                                     <h3 class="font-serif font-bold text-lg text-navy-900">${task.title}</h3>
                                 </div>
                                 <p class="text-xs text-slate-500 line-clamp-1">${task.description}</p>
@@ -1294,7 +1488,10 @@
                                     <span class="text-emerald-600">Sudah Dinilai: ${graded}/${subs.length}</span>
                                 </div>
                             </div>
-                            <button onclick="deleteDocHandler('assignments', '${task.id}')" class="text-rose-600 hover:bg-rose-50 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors">Hapus Penugasan</button>
+                            <div class="flex gap-2">
+                                <button onclick="editTask('${task.id}')" class="text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors border border-blue-100">Edit Tugas</button>
+                                <button onclick="deleteDocHandler('assignments', '${task.id}')" class="text-rose-600 hover:bg-rose-50 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors border border-transparent">Hapus</button>
+                            </div>
                         </div>
                     `;
                 });
@@ -1303,10 +1500,52 @@
             html += `</div>`;
             container.innerHTML = html;
         }
+        
+        window.resetTaskForm = () => {
+            state.editingTaskId = null;
+            document.getElementById('form-tugas-title').textContent = 'Input Penugasan Baru';
+            document.getElementById('task-unit').value = '';
+            document.getElementById('task-title').value = '';
+            document.getElementById('task-desc').value = '';
+            document.getElementById('task-deadline').value = '';
+            document.getElementById('btn-save-task').textContent = 'Simpan Tugas';
+        };
+
+        window.editTask = (id) => {
+            const task = state.assignments.find(t => t.id === id);
+            if (!task) return;
+            
+            state.editingTaskId = id;
+            
+            const form = document.getElementById('form-tugas');
+            form.classList.remove('hidden');
+            form.scrollIntoView({ behavior: 'smooth' });
+            
+            document.getElementById('form-tugas-title').textContent = 'Edit Penugasan';
+            document.getElementById('btn-save-task').textContent = 'Perbarui Tugas';
+            
+            document.getElementById('task-unit').value = task.unit || '';
+            document.getElementById('task-title').value = task.title || '';
+            document.getElementById('task-desc').value = task.description || '';
+            
+            if (task.deadline) {
+                const d = new Date(task.deadline);
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                document.getElementById('task-deadline').value = `${yyyy}-${mm}-${dd}`;
+            }
+
+            const radios = document.getElementsByName('task-type');
+            for (let r of radios) {
+                if (r.value === (task.type || 'text')) r.checked = true;
+            }
+        };
 
         window.saveTask = async () => {
             if (!state.user) return;
             const type = document.querySelector('input[name="task-type"]:checked').value;
+            const unit = document.getElementById('task-unit').value.trim();
             const title = document.getElementById('task-title').value.trim();
             const desc = document.getElementById('task-desc').value.trim();
             const deadline = document.getElementById('task-deadline').value;
@@ -1318,21 +1557,28 @@
 
             try {
                 const baseCol = `artifacts/${appId}/public/data/assignments`;
-                await addDoc(collection(db, baseCol), {
+                const payload = {
                     type,
+                    unit,
                     title, 
                     description: desc,
-                    deadline: new Date(deadline).getTime(),
-                    createdAt: Date.now()
-                });
-                window.showToast('Penugasan berhasil diterbitkan!');
-                document.getElementById('task-title').value = '';
-                document.getElementById('task-desc').value = '';
-                document.getElementById('task-deadline').value = '';
+                    deadline: new Date(deadline).getTime()
+                };
+
+                if (state.editingTaskId) {
+                    await updateDoc(doc(db, baseCol, state.editingTaskId), payload);
+                    window.showToast('Penugasan berhasil diperbarui!');
+                } else {
+                    payload.createdAt = Date.now();
+                    await addDoc(collection(db, baseCol), payload);
+                    window.showToast('Penugasan berhasil diterbitkan!');
+                }
+                
+                resetTaskForm();
                 toggleForm('form-tugas');
             } catch (e) {
                 console.error(e);
-                window.showToast('Gagal membuat tugas', 'error');
+                window.showToast('Gagal memproses tugas', 'error');
             }
         };
 
@@ -1464,13 +1710,56 @@
                         <h2 class="text-2xl font-serif font-bold text-navy-900">Manajemen Data Akun Peserta Guru</h2>
                         <p class="text-slate-500 text-sm mt-1">Kelola daftar akun peserta dan daftarkan guru baru ke dalam sistem.</p>
                     </div>
-                    <button onclick="toggleForm('form-tambah-peserta')" class="px-5 py-2.5 gold-gradient text-navy-900 font-bold text-xs rounded-xl shadow-md hover:opacity-90 transition-all flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-                        <span>Tambah Peserta Baru</span>
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleForm('form-import-peserta'); document.getElementById('form-tambah-peserta').classList.add('hidden');" class="px-5 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs rounded-xl shadow-sm hover:bg-emerald-100 transition-all flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            <span class="hidden sm:inline">Import Data</span>
+                        </button>
+                        <button onclick="toggleForm('form-tambah-peserta'); document.getElementById('form-import-peserta').classList.add('hidden');" class="px-5 py-2.5 gold-gradient text-navy-900 font-bold text-xs rounded-xl shadow-md hover:opacity-90 transition-all flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                            <span class="hidden sm:inline">Tambah Manual</span>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Form Modal / Panel Add Peserta -->
+                <!-- Form Modal / Panel Import Peserta (Excel & Copy-Paste JSON) -->
+                <div id="form-import-peserta" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
+                    <h3 class="text-lg font-serif font-bold text-navy-900 mb-2">Import Data Peserta (Excel atau Salin-Tempel JSON)</h3>
+                    <p class="text-xs text-slate-500 mb-4">Pilih unggah file Excel (.xlsx) atau gunakan kotak salin-tempel (copy-paste) teks format JSON di bawah ini untuk mendaftarkan banyak guru sekaligus.</p>
+                    
+                    <div class="flex flex-wrap gap-3 mb-6">
+                        <button onclick="downloadImportTemplate('xlsx')" class="px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-xs font-bold transition-colors flex items-center gap-2">
+                            Unduh Contoh Format (Excel)
+                        </button>
+                        <button onclick="fillSampleJSON()" class="px-4 py-2 bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 rounded-xl text-xs font-bold transition-colors flex items-center gap-2">
+                            Muat Contoh Teks JSON
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Opsi 1: File Excel -->
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">1. Unggah File (.xlsx / .csv)</label>
+                            <input type="file" id="import-file" accept=".xlsx, .xls, .csv" class="w-full p-2 border border-slate-300 rounded-xl text-sm bg-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-navy-50 file:text-navy-900 hover:file:bg-navy-100 cursor-pointer">
+                            <button id="btn-process-import-file" onclick="processImportParticipants('file')" class="mt-3 w-full py-2 bg-navy-800 text-white font-bold text-xs rounded-xl shadow hover:opacity-90">Proses File Excel</button>
+                        </div>
+
+                        <!-- Opsi 2: Salin Tempel JSON -->
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col justify-between">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">2. Salin-Tempel (Copy-Paste) Teks JSON</label>
+                                <textarea id="import-json-text" rows="4" placeholder="[&#10;  {&#10;    &quot;Nama&quot;: &quot;Budi Santoso, S.Pd.&quot;,&#10;    &quot;NIP&quot;: &quot;19800101...&quot;,&#10;    &quot;Asal Sekolah&quot;: &quot;SDN 1&quot;,&#10;    &quot;Kecamatan&quot;: &quot;Kec. ...&quot;&#10;  }&#10;]" class="w-full p-3 border border-slate-300 rounded-xl text-xs font-mono bg-white focus:ring-2 focus:ring-navy-800"></textarea>
+                            </div>
+                            <button id="btn-process-import-json" onclick="processImportParticipants('json')" class="mt-3 w-full py-2 gold-gradient text-navy-900 font-bold text-xs rounded-xl shadow hover:opacity-90">Proses Teks JSON</button>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 mt-5 pt-4 border-t border-slate-200">
+                        <button onclick="toggleForm('form-import-peserta')" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 rounded-xl">Tutup Menu Import</button>
+                    </div>
+                </div>
+
+                <!-- Form Modal / Panel Add Peserta Manual -->
                 <div id="form-tambah-peserta" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
                     <h3 class="text-lg font-serif font-bold text-navy-900 mb-2">Registrasi Peserta Guru SD Baru</h3>
                     <p class="text-xs text-slate-500 mb-4">Lengkapi data di bawah ini. NIP akan otomatis dijadikan Username sekaligus Password peserta.</p>
@@ -1630,6 +1919,118 @@
                 window.showToast('Gagal menghapus data', 'error');
             }
         };
+
+        // --- FITUR IMPORT PESERTA (EXCEL/JSON) ---
+        
+        window.downloadImportTemplate = (type) => {
+            const sampleData = [
+                { "Nama": "Budi Santoso, S.Pd.", "NIP": "198001012005011001", "Asal Sekolah": "SDN 1 Merdeka", "Kecamatan": "Semarang Tengah" },
+                { "Nama": "Siti Aminah, M.Pd.", "NIP": "198202022006022002", "Asal Sekolah": "SDN 2 Nusantara", "Kecamatan": "Semarang Barat" }
+            ];
+
+            if (type === 'xlsx' && typeof XLSX !== 'undefined') {
+                const ws = XLSX.utils.json_to_sheet(sampleData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Daftar_Peserta");
+                XLSX.writeFile(wb, "Format_Import_Peserta.xlsx");
+            } else {
+                window.showToast('Library Excel belum siap.', 'error');
+            }
+        };
+
+        window.fillSampleJSON = () => {
+            const sampleData = [
+                { "Nama": "Budi Santoso, S.Pd.", "NIP": "198001012005011001", "Asal Sekolah": "SDN 1 Merdeka", "Kecamatan": "Semarang Tengah" },
+                { "Nama": "Siti Aminah, M.Pd.", "NIP": "198202022006022002", "Asal Sekolah": "SDN 2 Nusantara", "Kecamatan": "Semarang Barat" }
+            ];
+            document.getElementById('import-json-text').value = JSON.stringify(sampleData, null, 2);
+            window.showToast('Contoh teks JSON dimuat ke kotak!');
+        };
+
+        window.processImportParticipants = async (mode) => {
+            if (!state.user) return;
+            let parsedData = [];
+
+            if (mode === 'json') {
+                const jsonText = document.getElementById('import-json-text').value.trim();
+                if (!jsonText) {
+                    window.showToast('Kotak teks JSON masih kosong.', 'error');
+                    return;
+                }
+                try {
+                    parsedData = JSON.parse(jsonText);
+                    await executeBatchImport(parsedData);
+                } catch (err) {
+                    console.error("Invalid JSON format:", err);
+                    window.showToast('Format teks JSON tidak valid. Pastikan kurung siku dan tanda kutip benar.', 'error');
+                }
+            } else if (mode === 'file') {
+                const fileInput = document.getElementById('import-file');
+                const file = fileInput.files[0];
+                if (!file) {
+                    window.showToast('Silakan pilih file Excel terlebih dahulu.', 'error');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const data = e.target.result;
+                        const workbook = XLSX.read(data, { type: 'binary' });
+                        const firstSheet = workbook.SheetNames[0];
+                        parsedData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+                        await executeBatchImport(parsedData);
+                        fileInput.value = '';
+                    } catch (err) {
+                        console.error("Error reading file:", err);
+                        window.showToast('Gagal membaca file Excel.', 'error');
+                    }
+                };
+                reader.readAsBinaryString(file);
+            }
+        };
+
+        async function executeBatchImport(parsedData) {
+            if (!parsedData || parsedData.length === 0) {
+                window.showToast('Data import kosong.', 'error');
+                return;
+            }
+
+            let successCount = 0;
+            let skipCount = 0;
+
+            for (let row of parsedData) {
+                const name = row['Nama'] || row['nama'] || row['Name'];
+                const nip = row['NIP'] || row['nip'] || row['Nip'];
+                const school = row['Asal Sekolah'] || row['Sekolah'] || row['sekolah'] || row['Asal_Sekolah'];
+                const district = row['Kecamatan'] || row['kecamatan'];
+
+                if (name && nip && school && district) {
+                    const nipStr = String(nip).trim();
+                    const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', nipStr);
+                    
+                    const docSnap = await getDoc(userRef);
+                    if (!docSnap.exists()) {
+                        await setDoc(userRef, {
+                            uid: nipStr, 
+                            nip: nipStr,
+                            name: String(name).trim(),
+                            school: String(school).trim(),
+                            district: String(district).trim(),
+                            role: 'peserta',
+                            registeredAt: Date.now()
+                        });
+                        successCount++;
+                    } else {
+                        skipCount++;
+                    }
+                }
+            }
+
+            window.showToast(`Import berhasil! ${successCount} peserta didaftarkan. ${skipCount > 0 ? `(${skipCount} terlewat karena NIP sudah ada)` : ''}`);
+            toggleForm('form-import-peserta');
+            document.getElementById('import-json-text').value = '';
+        }
 
         /* ======================== MANAJEMEN FASILITATOR ======================== */
 
