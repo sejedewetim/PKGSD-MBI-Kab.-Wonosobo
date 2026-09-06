@@ -137,14 +137,16 @@
             table { min-width: 640px; }
             #toast-container { right: 0.5rem; left: 0.5rem; width: auto; max-width: none; padding-left: 0; padding-right: 0; }
         }
-        /* Responsive shell: keep content and footers in normal document flow. */
+        /* Responsive shell: keep footers in normal flow after all active content. */
         html, body { min-height: calc(100 * min(var(--vh, 1vh), 1vh)); }
         body { display: flex; width: 100%; }
         #app-wrapper { width: 100%; min-height: calc(100 * min(var(--vh, 1vh), 1vh)); }
         #login-view, #dashboard-view { min-height: calc(100 * min(var(--vh, 1vh), 1vh)); height: auto; }
-        #dashboard-view { overflow: visible; }
-        #dashboard-main { min-width: 0; overflow: visible; }
-        #dashboard-view > footer { flex: 0 0 auto; width: 100%; clear: both; }
+        #login-view { display: flex; flex-direction: column; }
+        #dashboard-view { display: flex; flex-direction: column; overflow: visible; }
+        #dashboard-view.hidden, #login-view.hidden { display: none !important; }
+        #dashboard-main { flex: 0 0 auto; min-width: 0; min-height: 0; overflow: visible; }
+        #login-view > footer, #dashboard-view > footer { position: static; flex: 0 0 auto; width: 100%; clear: both; margin-top: 1rem; }
         #content-area { min-width: 0; overflow-wrap: anywhere; }
         .overflow-x-auto { -webkit-overflow-scrolling: touch; }
         table { max-width: 100%; }
@@ -174,10 +176,13 @@
   <script src="/_sdk/5629ea66dc55d54f.editing_sdk.js" type="text/javascript" integrity="sha512-snPYzGvgiTEMUBOb+HlCBkFeiM0IRX4hcgA78wvalhC0WnJtaX+RCbosPWtNqZsZ7sZ9NwN0oePZYa+IlMwa+w=="></script>
   <script src="/_sdk/fcb6dc01f91829ac.resizing_sdk.js" type="text/javascript" integrity="sha512-YK8JfnN705qaEaVhiL7pcVB2Rs/BbdX5yxV55Az8zT/1JanyEWTw9HqCF915m9iV1YEaoil8qsjJz03l1Kb0Ug=="></script>
  </head>
- <body class="h-full w-full flex flex-col antialiased overflow-x-hidden selection:bg-gold-300 selection:text-navy-900" data-html-import-id="html-import-0" data-template-id="__page-root" style="background: rgb(248, 250, 252);"><!-- Toast Notification Container -->
+ <body class="h-full w-full flex flex-col antialiased overflow-x-hidden selection:bg-gold-300 selection:text-navy-900" data-html-import-id="html-import-0" data-template-id="__page-root" style="background: rgb(248, 250, 252);">
+  <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none max-w-sm w-full px-4" data-html-import-id="html-import-1"></div><!-- MAIN APP CONTAINER -->
-  <div id="app-wrapper" class="flex-grow flex flex-col min-h-screen" data-html-import-id="html-import-2"><!-- ========================================== --> <!-- VIEW 1: ELEGANT LOGIN VIEW (PESERTA PORTAL) --> <!-- ========================================== -->
-   <div id="login-view" class="relative flex-grow flex flex-col justify-between overflow-hidden" data-html-import-id="html-import-3"><!-- Background Decorative Elements -->
+  <div id="app-wrapper" class="flex-grow flex flex-col min-h-screen" data-html-import-id="html-import-2">
+   <!-- ========================================== --> <!-- VIEW 1: ELEGANT LOGIN VIEW (PESERTA PORTAL) --> <!-- ========================================== -->
+   <div id="login-view" class="relative flex-grow flex flex-col justify-between overflow-hidden" data-html-import-id="html-import-3">
+    <!-- Background Decorative Elements -->
     <div class="absolute inset-0 z-0 opacity-40 pointer-events-none overflow-hidden" data-html-import-id="html-import-4">
      <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-gold-400/20 blur-3xl canva-container canva-container" data-html-import-id="html-import-5" data-template-id="div-0" style="background: rgba(244, 196, 48, 0.2);"></div>
      <div class="absolute top-1/2 -right-20 w-80 h-80 rounded-full bg-navy-800/10 blur-3xl canva-container canva-container" data-html-import-id="html-import-6" data-template-id="div-1" style="background: rgba(11, 30, 54, 0.098);"></div>
@@ -193,15 +198,16 @@
        <p class="text-[11px] text-gray-500 font-medium tracking-wide canva-text canva-text" data-html-import-id="html-import-13" data-template-id="p-5" style="color: rgb(107, 114, 128); font-weight: 500; font-style: normal; font-size: 11px;">Program Pengembangan Kompetensi Guru Sekolah Dasar Mengajar Bahasa Inggris</p>
       </div>
      </div><!-- Subtle/Discrete Fasilitator Access Button in Top Right --> <button onclick="openFasilitatorModal()" class="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold text-navy-800 bg-white hover:bg-slate-100 rounded-full border border-slate-300 shadow-sm transition-all duration-200 hover:shadow canva-button canva-button" data-html-import-id="html-import-14" data-template-id="button-6" style="background: rgb(255, 255, 255); color: rgb(11, 30, 54); font-weight: 600; font-size: 12px;">
-      <svg class="w-3.5 h-3.5 text-gold-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-15" data-template-id="svg-7">
-       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" data-html-import-id="html-import-16"></path>
+      <svg class="w-3.5 h-3.5 text-gold-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-15" data-template-id="svg-7"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" data-html-import-id="html-import-16"></path>
       </svg><span class="hidden sm:inline canva-text canva-text" data-html-import-id="html-import-17" data-template-id="span-8" style="color: rgb(11, 30, 54); font-weight: 400; font-style: normal; font-size: 16px;">Access</span>
       <canva-inline-text data-template-id="canva-inline-text-9" class="canva-text canva-text" style="color: rgb(11, 30, 54); font-weight: 600; font-style: normal; font-size: 12px;" data-html-import-id="html-import-18">Facilitator</canva-inline-text></button>
     </header><!-- Main Hero Login Body -->
     <main class="relative z-10 my-auto max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full" data-html-import-id="html-import-19">
-     <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center" data-html-import-id="html-import-20"><!-- Left Hero Branding -->
+     <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center" data-html-import-id="html-import-20">
+      <!-- Left Hero Branding -->
       <div class="lg:col-span-7 space-y-6 text-left" data-html-import-id="html-import-21">
-       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-100 border border-gold-300 text-gold-600 text-xs font-bold uppercase tracking-wider canva-container canva-container" data-html-import-id="html-import-22" data-template-id="div-10" style="background: rgb(255, 251, 234); color: rgb(170, 136, 23); font-weight: 700; font-size: 12px;"><span class="w-2 h-2 rounded-full bg-gold-500 animate-pulse canva-text canva-text" data-html-import-id="html-import-23" data-template-id="span-11" style="background: rgb(212, 175, 55);"></span><canva-inline-text data-template-id="canva-inline-text-12" class="canva-text canva-text" style="color: rgb(170, 136, 23); font-weight: 700; font-style: normal; font-size: 12px;" data-html-import-id="html-import-24">ELEMENTARY TEACHER LEARNING PORTAL</canva-inline-text>
+       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-100 border border-gold-300 text-gold-600 text-xs font-bold uppercase tracking-wider canva-container canva-container" data-html-import-id="html-import-22" data-template-id="div-10" style="background: rgb(255, 251, 234); color: rgb(170, 136, 23); font-weight: 700; font-size: 12px;">
+        <span class="w-2 h-2 rounded-full bg-gold-500 animate-pulse canva-text canva-text" data-html-import-id="html-import-23" data-template-id="span-11" style="background: rgb(212, 175, 55);"></span><canva-inline-text data-template-id="canva-inline-text-12" class="canva-text canva-text" style="color: rgb(170, 136, 23); font-weight: 700; font-style: normal; font-size: 12px;" data-html-import-id="html-import-24">ELEMENTARY TEACHER LEARNING PORTAL</canva-inline-text>
        </div>
        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-navy-900 leading-tight canva-text canva-text" data-html-import-id="html-import-25" data-template-id="h2-13" style="color: rgb(6, 17, 33); font-weight: 700; font-style: normal; font-size: 48px;">Empowering Excellent Elementary Teachers for Pacific &amp; Global English</h2>
        <p class="text-slate-600 text-base sm:text-lg leading-relaxed max-w-2xl canva-text canva-text" data-html-import-id="html-import-26" data-template-id="p-14" style="color: rgb(71, 85, 105); font-weight: 400; font-style: normal; font-size: 18px;">An integrated Learning Management System (LMS) platform to strengthen pedagogical strategies, expand vocabulary, and master interactive English teaching techniques at the elementary school level.</p><!-- Highlights Grid -->
@@ -228,28 +234,32 @@
         <div class="absolute top-0 right-0 w-28 h-28 bg-gold-400/10 rounded-bl-full pointer-events-none canva-container canva-container" data-html-import-id="html-import-42" data-template-id="div-28" style="background: rgba(244, 196, 48, 0.098);"></div>
         <div class="mb-6" data-html-import-id="html-import-43">
          <div class="w-12 h-12 rounded-xl gold-gradient flex items-center justify-center text-navy-900 shadow-md mb-4" data-html-import-id="html-import-44">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-45">
-           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" data-html-import-id="html-import-46"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6" data-html-import-id="html-import-47"></path>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-45"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" data-html-import-id="html-import-46"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6" data-html-import-id="html-import-47"></path>
           </svg>
          </div>
          <h3 class="text-2xl font-serif font-bold text-navy-900 canva-text canva-text" data-html-import-id="html-import-48" data-template-id="h3-29" style="color: rgb(6, 17, 33); font-weight: 700; font-style: normal; font-size: 24px;">Participant Login</h3>
          <p class="text-xs text-slate-500 mt-1 canva-text canva-text" data-html-import-id="html-import-49" data-template-id="p-30" style="color: rgb(100, 116, 139); font-weight: 400; font-style: normal; font-size: 12px;">Enter your username and password to begin.</p>
         </div>
         <form onsubmit="event.preventDefault(); window.handleLogin('peserta');" class="space-y-4" data-html-import-id="html-import-50">
-         <div data-html-import-id="html-import-51"><label for="peserta-nip" class="block text-xs font-semibold text-navy-900 uppercase tracking-wider mb-2 canva-text canva-text" data-html-import-id="html-import-52" data-template-id="label-31" style="color: rgb(6, 17, 33); font-weight: 600; font-style: normal; font-size: 12px;">USERNAME</label>
-          <div class="relative" data-html-import-id="html-import-53"><input type="text" id="peserta-nip" placeholder="Enter your username" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-gold-500 transition-all text-sm font-medium bg-white/90 shadow-sm canva-input canva-input" data-html-import-id="html-import-54" data-template-id="input-32" style="background: rgba(255, 255, 255, 0.9); color: rgb(30, 41, 59); font-weight: 500; font-size: 14px;">
+         <div data-html-import-id="html-import-51">
+          <label for="peserta-nip" class="block text-xs font-semibold text-navy-900 uppercase tracking-wider mb-2 canva-text canva-text" data-html-import-id="html-import-52" data-template-id="label-31" style="color: rgb(6, 17, 33); font-weight: 600; font-style: normal; font-size: 12px;">USERNAME</label>
+          <div class="relative" data-html-import-id="html-import-53">
+           <input type="text" id="peserta-nip" placeholder="Enter your username" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-gold-500 transition-all text-sm font-medium bg-white/90 shadow-sm canva-input canva-input" data-html-import-id="html-import-54" data-template-id="input-32" style="background: rgba(255, 255, 255, 0.9); color: rgb(30, 41, 59); font-weight: 500; font-size: 14px;">
           </div>
          </div>
-         <div data-html-import-id="html-import-55"><label for="peserta-pass" class="block text-xs font-semibold text-navy-900 uppercase tracking-wider mb-2 canva-text canva-text" data-html-import-id="html-import-56" data-template-id="label-33" style="color: rgb(6, 17, 33); font-weight: 600; font-style: normal; font-size: 12px;">PASSWORD</label>
-          <div class="relative" data-html-import-id="html-import-57"><input type="password" id="peserta-pass" placeholder="Enter your password" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-gold-500 transition-all text-sm font-medium bg-white/90 shadow-sm canva-input canva-input" data-html-import-id="html-import-58" data-template-id="input-34" style="background: rgba(255, 255, 255, 0.9); color: rgb(30, 41, 59); font-weight: 500; font-size: 14px;">
+         <div data-html-import-id="html-import-55">
+          <label for="peserta-pass" class="block text-xs font-semibold text-navy-900 uppercase tracking-wider mb-2 canva-text canva-text" data-html-import-id="html-import-56" data-template-id="label-33" style="color: rgb(6, 17, 33); font-weight: 600; font-style: normal; font-size: 12px;">PASSWORD</label>
+          <div class="relative" data-html-import-id="html-import-57">
+           <input type="password" id="peserta-pass" placeholder="Enter your password" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-gold-500 transition-all text-sm font-medium bg-white/90 shadow-sm canva-input canva-input" data-html-import-id="html-import-58" data-template-id="input-34" style="background: rgba(255, 255, 255, 0.9); color: rgb(30, 41, 59); font-weight: 500; font-size: 14px;">
           </div>
          </div>
-         <div><label for="peserta-batch" class="block text-xs font-semibold text-navy-900 uppercase tracking-wider mb-2">BATCH</label><select id="peserta-batch" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-gold-500 transition-all text-sm font-medium bg-white/90 shadow-sm"><option value="1">Batch 1</option><option value="2">Batch 2</option></select>
+         <div>
+          <label for="peserta-batch" class="block text-xs font-semibold text-navy-900 uppercase tracking-wider mb-2">BATCH</label><select id="peserta-batch" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-gold-500 transition-all text-sm font-medium bg-white/90 shadow-sm"><option value="1">Batch 1</option><option value="2">Batch 2</option></select>
          </div>
-         <div><label for="peserta-class" class="block text-xs font-semibold text-navy-900 uppercase tracking-wider mb-2">CLASS</label><select id="peserta-class" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-gold-500 transition-all text-sm font-medium bg-white/90 shadow-sm"><option value="">Pilih kelas</option><option value="Kelas 3">Kelas 3</option><option value="Kelas 4">Kelas 4</option><option value="Kelas 5">Kelas 5</option><option value="Kelas 6">Kelas 6</option></select>
+         <div>
+          <label for="peserta-class" class="block text-xs font-semibold text-navy-900 uppercase tracking-wider mb-2">CLASS</label><select id="peserta-class" class="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-gold-500 transition-all text-sm font-medium bg-white/90 shadow-sm"><option value="">Pilih kelas</option><option value="Kelas 3">Kelas 3</option><option value="Kelas 4">Kelas 4</option><option value="Kelas 5">Kelas 5</option><option value="Kelas 6">Kelas 6</option></select>
          </div><button type="submit" class="w-full py-3.5 px-6 navy-gradient text-white font-semibold rounded-xl hover:opacity-95 transition-all shadow-md flex items-center justify-center gap-2 group canva-button canva-button" data-html-import-id="html-import-59" data-template-id="button-35" style="background: linear-gradient(135deg, rgb(11, 30, 54), rgb(6, 17, 33)); color: rgb(255, 255, 255); font-weight: 600;"> <span data-html-import-id="html-import-60" data-template-id="span-36" class="canva-text canva-text" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 16px;">Enter Participant Class</span>
-          <svg class="w-4 h-4 text-gold-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-61" data-template-id="svg-37">
-           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" data-html-import-id="html-import-62"></path>
+          <svg class="w-4 h-4 text-gold-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-61" data-template-id="svg-37"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" data-html-import-id="html-import-62"></path>
           </svg></button>
         </form>
         <div class="mt-6 pt-6 border-t border-slate-200/80 text-center" data-html-import-id="html-import-63">
@@ -284,7 +294,8 @@
      <div id="quiz-workspace" class="flex-grow flex flex-col p-6 md:p-10" data-html-import-id="html-import-80">
       <div id="quiz-question" class="text-lg font-semibold text-navy-900 leading-relaxed mb-6 canva-container" data-html-import-id="html-import-81" data-template-id="div-48" style="color: rgb(6, 17, 33); font-weight: 600; font-size: 18px;"></div>
       <div id="quiz-options" class="space-y-3 mb-6" data-html-import-id="html-import-82"></div><label for="quiz-answer" class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 canva-text" data-html-import-id="html-import-83" data-template-id="label-49" style="color: rgb(100, 116, 139); font-weight: 700; font-style: normal; font-size: 12px;">Jawaban</label><textarea id="quiz-answer" rows="7" class="w-full flex-grow p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-gold-500 text-sm canva-input" placeholder="Tuliskan jawaban Anda..." data-html-import-id="html-import-84" data-template-id="textarea-50" style="background: rgb(255, 255, 255); color: rgb(30, 41, 59); font-size: 14px;"></textarea>
-      <div class="mt-6 flex justify-between gap-3" data-html-import-id="html-import-85"><button id="quiz-prev" type="button" onclick="window.quizPrevious()" class="px-5 py-3 rounded-xl border border-slate-300 text-xs font-bold canva-button" data-html-import-id="html-import-86" data-template-id="button-51" style="color: rgb(30, 41, 59); font-weight: 700; font-style: normal; font-size: 12px;">Sebelumnya</button><button id="quiz-next" type="button" onclick="window.quizNext()" class="px-6 py-3 rounded-xl gold-gradient text-navy-900 text-xs font-bold canva-button" data-html-import-id="html-import-87" data-template-id="button-52" style="background: linear-gradient(135deg, rgb(244, 196, 48), rgb(212, 175, 55), rgb(170, 136, 23)); color: rgb(6, 17, 33); font-weight: 700; font-style: normal; font-size: 12px;">Soal Berikutnya</button>
+      <div class="mt-6 flex justify-between gap-3" data-html-import-id="html-import-85">
+       <button id="quiz-prev" type="button" onclick="window.quizPrevious()" class="px-5 py-3 rounded-xl border border-slate-300 text-xs font-bold canva-button" data-html-import-id="html-import-86" data-template-id="button-51" style="color: rgb(30, 41, 59); font-weight: 700; font-style: normal; font-size: 12px;">Sebelumnya</button><button id="quiz-next" type="button" onclick="window.quizNext()" class="px-6 py-3 rounded-xl gold-gradient text-navy-900 text-xs font-bold canva-button" data-html-import-id="html-import-87" data-template-id="button-52" style="background: linear-gradient(135deg, rgb(244, 196, 48), rgb(212, 175, 55), rgb(170, 136, 23)); color: rgb(6, 17, 33); font-weight: 700; font-style: normal; font-size: 12px;">Soal Berikutnya</button>
       </div>
      </div>
      <div id="quiz-result" class="hidden flex flex-grow flex-col items-center justify-center p-8 md:p-12 text-center" data-html-import-id="html-import-88">
@@ -292,7 +303,8 @@
        <h3 class="text-2xl font-serif font-bold text-navy-900 mb-2 canva-text" data-html-import-id="html-import-90" data-template-id="h3-53" style="color: rgb(6, 17, 33); font-weight: 700; font-style: normal; font-size: 24px;">Riwayat Percobaan Kuis</h3>
        <p id="quiz-score" class="text-lg font-bold text-gold-600 mb-6 canva-text" data-html-import-id="html-import-91" data-template-id="p-54" style="color: rgb(170, 136, 23); font-weight: 700; font-size: 18px;"></p>
        <div id="quiz-history" class="space-y-2 text-left mb-6" data-html-import-id="html-import-92"></div>
-       <div class="flex flex-wrap items-center justify-center gap-3" data-html-import-id="html-import-93"><button type="button" onclick="window.closeQuiz()" class="px-6 py-3 rounded-xl navy-gradient text-white text-xs font-bold canva-button" data-html-import-id="html-import-94" data-template-id="button-55" style="background: linear-gradient(135deg, rgb(11, 30, 54), rgb(6, 17, 33)); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 12px;">Kembali ke Modul</button>
+       <div class="flex flex-wrap items-center justify-center gap-3" data-html-import-id="html-import-93">
+        <button type="button" onclick="window.closeQuiz()" class="px-6 py-3 rounded-xl navy-gradient text-white text-xs font-bold canva-button" data-html-import-id="html-import-94" data-template-id="button-55" style="background: linear-gradient(135deg, rgb(11, 30, 54), rgb(6, 17, 33)); color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 12px;">Kembali ke Modul</button>
        </div>
       </div>
      </div>
@@ -302,17 +314,18 @@
     <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 p-6 canva-container" data-html-import-id="html-import-96" data-template-id="div-57" style="background: rgb(255, 255, 255);">
      <h2 id="quiz-consent-title" class="text-xl font-serif font-bold text-navy-900 mb-3 canva-text" data-html-import-id="html-import-97" data-template-id="h2-58" style="color: rgb(6, 17, 33); font-weight: 700; font-style: normal; font-size: 20px;">Quiz Agreement</h2>
      <p class="text-sm text-slate-600 leading-relaxed mb-5 canva-text" data-html-import-id="html-import-98" data-template-id="p-59" style="color: rgb(71, 85, 105); font-weight: 400; font-style: normal; font-size: 14px;">Please confirm that you have studied the module and are ready to begin this quiz. Your attempt will be submitted for assessment when you finish.</p><label class="flex items-start gap-3 text-sm text-slate-700 mb-6 cursor-pointer canva-text" data-html-import-id="html-import-99" data-template-id="label-60" style="color: rgb(51, 65, 85); font-size: 14px;"><input id="quiz-consent-checkbox" type="checkbox" class="mt-1 w-4 h-4 text-gold-500 focus:ring-gold-500 canva-input" data-html-import-id="html-import-100" data-template-id="input-61" style="color: rgb(51, 65, 85); font-size: 14px;"><span data-html-import-id="html-import-101" data-template-id="span-62" class="canva-text" style="color: rgb(51, 65, 85); font-weight: 400; font-style: normal; font-size: 16px;">I agree to begin the quiz after studying the module.</span></label>
-     <div class="flex justify-end gap-3" data-html-import-id="html-import-102"><button type="button" onclick="window.closeQuizConsent()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-600 hover:bg-slate-100 canva-button" data-html-import-id="html-import-103" data-template-id="button-63" style="color: rgb(71, 85, 105); font-weight: 600; font-style: normal; font-size: 12px;">Cancel</button><button type="button" onclick="window.confirmQuizStart()" class="px-5 py-2.5 rounded-xl gold-gradient text-navy-900 text-xs font-bold shadow-sm canva-button" data-html-import-id="html-import-104" data-template-id="button-64" style="background: linear-gradient(135deg, rgb(244, 196, 48), rgb(212, 175, 55), rgb(170, 136, 23)); color: rgb(6, 17, 33); font-weight: 700; font-style: normal; font-size: 12px;">Agree &amp; Start Quiz</button>
+     <div class="flex justify-end gap-3" data-html-import-id="html-import-102">
+      <button type="button" onclick="window.closeQuizConsent()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-600 hover:bg-slate-100 canva-button" data-html-import-id="html-import-103" data-template-id="button-63" style="color: rgb(71, 85, 105); font-weight: 600; font-style: normal; font-size: 12px;">Cancel</button><button type="button" onclick="window.confirmQuizStart()" class="px-5 py-2.5 rounded-xl gold-gradient text-navy-900 text-xs font-bold shadow-sm canva-button" data-html-import-id="html-import-104" data-template-id="button-64" style="background: linear-gradient(135deg, rgb(244, 196, 48), rgb(212, 175, 55), rgb(170, 136, 23)); color: rgb(6, 17, 33); font-weight: 700; font-style: normal; font-size: 12px;">Agree &amp; Start Quiz</button>
      </div>
     </div>
    </div><!-- FASILITATOR LOGIN MODAL (POPUPS) -->
    <div id="fasilitator-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-navy-900/70 backdrop-blur-md transition-opacity duration-300 canva-container canva-container" data-html-import-id="html-import-105" data-template-id="div-65" style="background: rgba(6, 17, 33, 0.7);">
-    <div class="glass-dark max-w-md w-full rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 border border-gold-500/30 canva-container canva-container" data-html-import-id="html-import-106" data-template-id="div-66" style="background: rgba(11, 30, 54, 0.95);"><!-- Modal Header -->
+    <div class="glass-dark max-w-md w-full rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 border border-gold-500/30 canva-container canva-container" data-html-import-id="html-import-106" data-template-id="div-66" style="background: rgba(11, 30, 54, 0.95);">
+     <!-- Modal Header -->
      <div class="px-6 py-5 bg-navy-900 border-b border-gold-500/20 flex items-center justify-between canva-container canva-container" data-html-import-id="html-import-107" data-template-id="div-67" style="background: rgb(6, 17, 33);">
       <div class="flex items-center gap-3" data-html-import-id="html-import-108">
        <div class="w-9 h-9 rounded-lg gold-gradient flex items-center justify-center text-navy-900 font-bold shadow" data-html-import-id="html-import-109">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-110">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" data-html-import-id="html-import-111"></path>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-110"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" data-html-import-id="html-import-111"></path>
         </svg>
        </div>
        <div data-html-import-id="html-import-112">
@@ -320,23 +333,26 @@
         <p class="text-[11px] text-gold-400 font-medium canva-text canva-text" data-html-import-id="html-import-114" data-template-id="p-69" style="color: rgb(244, 196, 48); font-weight: 500; font-style: normal; font-size: 11px;">LMS Management &amp; Assessment Portal</p>
        </div>
       </div><button onclick="closeFasilitatorModal()" class="text-slate-400 hover:text-white p-1 rounded-lg transition-colors canva-button canva-button" data-html-import-id="html-import-115" data-template-id="button-70" style="color: rgb(148, 163, 184);">
-       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-116">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" data-html-import-id="html-import-117"></path>
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-116"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" data-html-import-id="html-import-117"></path>
        </svg></button>
      </div><!-- Modal Form -->
      <form onsubmit="event.preventDefault(); window.handleLogin('fasilitator');" class="p-6 space-y-4" data-html-import-id="html-import-118">
-      <div data-html-import-id="html-import-119"><label for="fasil-name" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 canva-text canva-text" data-html-import-id="html-import-120" data-template-id="label-71" style="color: rgb(203, 213, 225); font-weight: 600; font-style: normal; font-size: 12px;">Facilitator Username</label> <input type="text" id="fasil-name" placeholder="Enter your username" class="w-full px-4 py-3 rounded-xl bg-navy-800/90 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-all text-sm canva-input canva-input" data-html-import-id="html-import-121" data-template-id="input-72" style="background: rgba(11, 30, 54, 0.9); color: rgb(255, 255, 255); font-size: 14px;">
+      <div data-html-import-id="html-import-119">
+       <label for="fasil-name" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 canva-text canva-text" data-html-import-id="html-import-120" data-template-id="label-71" style="color: rgb(203, 213, 225); font-weight: 600; font-style: normal; font-size: 12px;">Facilitator Username</label> <input type="text" id="fasil-name" placeholder="Enter your username" class="w-full px-4 py-3 rounded-xl bg-navy-800/90 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-all text-sm canva-input canva-input" data-html-import-id="html-import-121" data-template-id="input-72" style="background: rgba(11, 30, 54, 0.9); color: rgb(255, 255, 255); font-size: 14px;">
       </div>
-      <div data-html-import-id="html-import-122"><label for="fasil-pin" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 canva-text canva-text" data-html-import-id="html-import-123" data-template-id="label-73" style="color: rgb(203, 213, 225); font-weight: 600; font-style: normal; font-size: 12px;">Password</label> <input type="password" id="fasil-pin" placeholder="Enter your password" class="w-full px-4 py-3 rounded-xl bg-navy-800/90 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-all text-sm canva-input canva-input" data-html-import-id="html-import-124" data-template-id="input-74" style="background: rgba(11, 30, 54, 0.9); color: rgb(255, 255, 255); font-size: 14px;">
+      <div data-html-import-id="html-import-122">
+       <label for="fasil-pin" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 canva-text canva-text" data-html-import-id="html-import-123" data-template-id="label-73" style="color: rgb(203, 213, 225); font-weight: 600; font-style: normal; font-size: 12px;">Password</label> <input type="password" id="fasil-pin" placeholder="Enter your password" class="w-full px-4 py-3 rounded-xl bg-navy-800/90 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-all text-sm canva-input canva-input" data-html-import-id="html-import-124" data-template-id="input-74" style="background: rgba(11, 30, 54, 0.9); color: rgb(255, 255, 255); font-size: 14px;">
       </div>
-      <div class="pt-2 flex items-center justify-end gap-3" data-html-import-id="html-import-125"><button type="button" onclick="closeFasilitatorModal()" class="px-4 py-2.5 text-xs font-semibold text-slate-300 hover:text-white transition-colors canva-button canva-button" data-html-import-id="html-import-126" data-template-id="button-75" style="color: rgb(203, 213, 225); font-weight: 600; font-style: normal; font-size: 12px;">Cancel</button> <button type="submit" class="px-6 py-2.5 gold-gradient text-navy-900 font-bold text-xs rounded-xl hover:opacity-90 shadow-md transition-all canva-button canva-button" data-html-import-id="html-import-127" data-template-id="button-76" style="background: linear-gradient(135deg, rgb(244, 196, 48), rgb(212, 175, 55), rgb(170, 136, 23)); color: rgb(6, 17, 33); font-weight: 700; font-style: normal; font-size: 12px;">
+      <div class="pt-2 flex items-center justify-end gap-3" data-html-import-id="html-import-125">
+       <button type="button" onclick="closeFasilitatorModal()" class="px-4 py-2.5 text-xs font-semibold text-slate-300 hover:text-white transition-colors canva-button canva-button" data-html-import-id="html-import-126" data-template-id="button-75" style="color: rgb(203, 213, 225); font-weight: 600; font-style: normal; font-size: 12px;">Cancel</button> <button type="submit" class="px-6 py-2.5 gold-gradient text-navy-900 font-bold text-xs rounded-xl hover:opacity-90 shadow-md transition-all canva-button canva-button" data-html-import-id="html-import-127" data-template-id="button-76" style="background: linear-gradient(135deg, rgb(244, 196, 48), rgb(212, 175, 55), rgb(170, 136, 23)); color: rgb(6, 17, 33); font-weight: 700; font-style: normal; font-size: 12px;">
                             Enter Facilitator Portal
                         </button>
       </div>
      </form>
     </div>
    </div><!-- ========================================== --> <!-- VIEW 2: MAIN DASHBOARD VIEW --> <!-- ========================================== -->
-   <div id="dashboard-view" class="hidden flex-grow flex flex-col min-h-screen" data-html-import-id="html-import-128"><!-- Navbar -->
+   <div id="dashboard-view" class="hidden flex-grow flex flex-col min-h-screen" data-html-import-id="html-import-128">
+    <!-- Navbar -->
     <header class="navy-gradient text-white shadow-xl sticky top-0 z-40 border-b border-gold-500/20" data-html-import-id="html-import-129">
      <div class="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between" data-html-import-id="html-import-130">
       <div class="flex items-center gap-3" data-html-import-id="html-import-131">
@@ -349,17 +365,15 @@
                             </span>
        </div>
       </div>
-      <div class="flex items-center gap-4" data-html-import-id="html-import-136">
-       <!-- Backup/Restore Buttons -->
-       <div class="hidden" data-html-import-id="html-import-137"><button onclick="window.handleBackupData()" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold hover:bg-emerald-100 transition-colors flex items-center gap-1 canva-button canva-button" title="Download Backup Data" data-html-import-id="html-import-138" data-template-id="button-80" style="background: rgb(236, 253, 245); color: rgb(4, 120, 87); font-weight: 700; font-size: 10px;">
-         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-139">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" data-html-import-id="html-import-140"></path>
+      <div class="flex items-center gap-4" data-html-import-id="html-import-136"><!-- Backup/Restore Buttons -->
+       <div class="hidden" data-html-import-id="html-import-137">
+        <button onclick="window.handleBackupData()" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold hover:bg-emerald-100 transition-colors flex items-center gap-1 canva-button canva-button" title="Download Backup Data" data-html-import-id="html-import-138" data-template-id="button-80" style="background: rgb(236, 253, 245); color: rgb(4, 120, 87); font-weight: 700; font-size: 10px;">
+         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-139"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" data-html-import-id="html-import-140"></path>
          </svg>
          <canva-inline-text data-template-id="canva-inline-text-81" class="canva-text canva-text" style="color: rgb(4, 120, 87); font-weight: 700; font-style: normal; font-size: 10px;" data-html-import-id="html-import-141">
                                 Backup Data
                             </canva-inline-text></button> <input type="file" id="restore-file-input" class="hidden canva-input canva-input" accept=".json" onchange="window.handleRestoreData(event)" data-html-import-id="html-import-142" data-template-id="input-82" style="color: rgb(255, 255, 255);"> <button onclick="document.getElementById('restore-file-input').click()" class="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold hover:bg-amber-100 transition-colors flex items-center gap-1 canva-button canva-button" title="Upload Backup Data" data-html-import-id="html-import-143" data-template-id="button-83" style="background: rgb(255, 251, 235); color: rgb(180, 83, 9); font-weight: 700; font-size: 10px;">
-         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-144">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" data-html-import-id="html-import-145"></path>
+         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-144"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" data-html-import-id="html-import-145"></path>
          </svg>
          <canva-inline-text data-template-id="canva-inline-text-84" class="canva-text canva-text" style="color: rgb(180, 83, 9); font-weight: 700; font-style: normal; font-size: 10px;" data-html-import-id="html-import-146">
                                 Restore Data
@@ -370,41 +384,43 @@
                                 U
                             </div><span class="text-slate-200 text-xs font-medium canva-text canva-text" id="user-name-display" data-html-import-id="html-import-149" data-template-id="span-87" style="color: rgb(226, 232, 240); font-weight: 500; font-style: normal; font-size: 12px;">Pengguna</span>
        </div><button onclick="window.handleLogout()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-navy-800 transition-colors border border-transparent hover:border-slate-700 canva-button canva-button" data-html-import-id="html-import-150" data-template-id="button-88" style="color: rgb(203, 213, 225); font-weight: 600; font-size: 12px;">
-        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-151" data-template-id="svg-89">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" data-html-import-id="html-import-152"></path>
+        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-151" data-template-id="svg-89"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" data-html-import-id="html-import-152"></path>
         </svg><span data-html-import-id="html-import-153" data-template-id="span-90" class="canva-text canva-text" style="color: rgb(203, 213, 225); font-weight: 400; font-style: normal; font-size: 16px;">Log Out</span> </button>
       </div>
      </div>
     </header><!-- Navigation Tabs -->
     <aside id="facilitator-sidebar" class="hidden md:block fixed left-0 top-16 bottom-0 z-30 w-64 bg-white border-r border-slate-200 shadow-sm overflow-y-auto canva-container canva-sidebar" data-html-import-id="html-import-154" data-template-id="aside-91" style="background: rgb(255, 255, 255);">
-     <div class="p-4 pb-0 flex justify-end" data-html-import-id="html-import-155"><button id="sidebar-toggle" type="button" onclick="window.toggleFacilitatorSidebar()" aria-label="Sembunyikan sidebar" class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-gold-500/30 text-gold-600 hover:bg-gold-100 transition-colors canva-button" data-html-import-id="html-import-156" data-template-id="button-92" style="color: rgb(170, 136, 23);">
-       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-157">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" data-html-import-id="html-import-158"></path>
+     <div class="p-4 pb-0 flex justify-end" data-html-import-id="html-import-155">
+      <button id="sidebar-toggle" type="button" onclick="window.toggleFacilitatorSidebar()" aria-label="Sembunyikan sidebar" class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-gold-500/30 text-gold-600 hover:bg-gold-100 transition-colors canva-button" data-html-import-id="html-import-156" data-template-id="button-92" style="color: rgb(170, 136, 23);">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-html-import-id="html-import-157"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" data-html-import-id="html-import-158"></path>
        </svg></button>
      </div>
-     <nav class="flex flex-col gap-1 p-4" aria-label="Navigasi portal" id="nav-tabs" data-html-import-id="html-import-159"><!-- Navigation tabs injected via JavaScript -->
+     <nav class="flex flex-col gap-1 p-4" aria-label="Navigasi portal" id="nav-tabs" data-html-import-id="html-import-159">
+      <!-- Navigation tabs injected via JavaScript -->
      </nav>
-     <div class="hidden px-4 pb-4 border-t border-slate-200 pt-4" data-html-import-id="html-import-160">
-      <button type="button" onclick="window.toggleSettingsMenu()" aria-expanded="false" class="w-full inline-flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-navy-900 hover:bg-slate-50 transition-colors canva-button" data-html-import-id="html-import-161" data-template-id="button-93" style="color: rgb(6, 17, 33); font-weight: 700; font-size: 12px;"> <span data-html-import-id="html-import-162" data-template-id="span-94" class="canva-text" style="color: rgb(6, 17, 33); font-weight: 400; font-style: normal; font-size: 16px;">⚙️ Settings</span><span aria-hidden="true" data-html-import-id="html-import-163" data-template-id="span-95" class="canva-text" style="color: rgb(6, 17, 33); font-weight: 400; font-style: normal; font-size: 16px;">›</span> </button>
+     <div class="hidden px-4 pb-4 border-t border-slate-200 pt-4" data-html-import-id="html-import-160"><button type="button" onclick="window.toggleSettingsMenu()" aria-expanded="false" class="w-full inline-flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-navy-900 hover:bg-slate-50 transition-colors canva-button" data-html-import-id="html-import-161" data-template-id="button-93" style="color: rgb(6, 17, 33); font-weight: 700; font-size: 12px;"> <span data-html-import-id="html-import-162" data-template-id="span-94" class="canva-text" style="color: rgb(6, 17, 33); font-weight: 400; font-style: normal; font-size: 16px;">⚙️ Settings</span><span aria-hidden="true" data-html-import-id="html-import-163" data-template-id="span-95" class="canva-text" style="color: rgb(6, 17, 33); font-weight: 400; font-style: normal; font-size: 16px;">›</span> </button>
       <section id="settings-menu" class="hidden mt-3 bg-slate-50 rounded-xl border border-slate-200 p-3 canva-section" aria-label="Settings menu" data-html-import-id="html-import-164" data-template-id="section-96" style="background: rgb(248, 250, 252);">
        <div class="mb-4" data-html-import-id="html-import-165">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 canva-text" data-html-import-id="html-import-166" data-template-id="h2-97" style="color: rgb(100, 116, 139); font-weight: 700; font-style: normal; font-size: 12px;">Theme</h2>
-        <div class="grid grid-cols-3 gap-1.5" data-html-import-id="html-import-167"><button type="button" onclick="window.setAppTheme('light')" class="px-2 py-2 rounded-lg border border-slate-200 bg-white text-[11px] font-semibold hover:bg-slate-100 canva-button" data-html-import-id="html-import-168" data-template-id="button-98" style="background: rgb(255, 255, 255); color: rgb(30, 41, 59); font-weight: 600; font-style: normal; font-size: 11px;">Light</button><button type="button" onclick="window.setAppTheme('soft')" class="px-2 py-2 rounded-lg border border-slate-200 bg-white text-[11px] font-semibold hover:bg-slate-100 canva-button" data-html-import-id="html-import-169" data-template-id="button-99" style="background: rgb(255, 255, 255); color: rgb(30, 41, 59); font-weight: 600; font-style: normal; font-size: 11px;">Soft</button><button type="button" onclick="window.setAppTheme('dark')" class="px-2 py-2 rounded-lg border border-slate-700 bg-navy-800 text-white text-[11px] font-semibold hover:bg-navy-900 canva-button" data-html-import-id="html-import-170" data-template-id="button-100" style="color: rgb(255, 255, 255); font-weight: 600; font-style: normal; font-size: 11px;">Dark</button>
+        <div class="grid grid-cols-3 gap-1.5" data-html-import-id="html-import-167">
+         <button type="button" onclick="window.setAppTheme('light')" class="px-2 py-2 rounded-lg border border-slate-200 bg-white text-[11px] font-semibold hover:bg-slate-100 canva-button" data-html-import-id="html-import-168" data-template-id="button-98" style="background: rgb(255, 255, 255); color: rgb(30, 41, 59); font-weight: 600; font-style: normal; font-size: 11px;">Light</button><button type="button" onclick="window.setAppTheme('soft')" class="px-2 py-2 rounded-lg border border-slate-200 bg-white text-[11px] font-semibold hover:bg-slate-100 canva-button" data-html-import-id="html-import-169" data-template-id="button-99" style="background: rgb(255, 255, 255); color: rgb(30, 41, 59); font-weight: 600; font-style: normal; font-size: 11px;">Soft</button><button type="button" onclick="window.setAppTheme('dark')" class="px-2 py-2 rounded-lg border border-slate-700 bg-navy-800 text-white text-[11px] font-semibold hover:bg-navy-900 canva-button" data-html-import-id="html-import-170" data-template-id="button-100" style="color: rgb(255, 255, 255); font-weight: 600; font-style: normal; font-size: 11px;">Dark</button>
         </div>
        </div>
        <div data-html-import-id="html-import-171">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 canva-text" data-html-import-id="html-import-172" data-template-id="h2-101" style="color: rgb(100, 116, 139); font-weight: 700; font-style: normal; font-size: 12px;">Data</h2>
-        <div class="flex flex-col gap-2" data-html-import-id="html-import-173"><button type="button" onclick="window.handleBackupData(); window.toggleSettingsMenu()" class="w-full px-2 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold hover:bg-emerald-100 canva-button" data-html-import-id="html-import-174" data-template-id="button-102" style="background: rgb(236, 253, 245); color: rgb(4, 120, 87); font-weight: 700; font-style: normal; font-size: 11px;">Download Backup</button><label for="settings-restore-file" class="w-full px-2 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold hover:bg-amber-100 text-center cursor-pointer canva-text" data-html-import-id="html-import-175" data-template-id="label-103" style="background: rgb(255, 251, 235); color: rgb(180, 83, 9); font-weight: 700; font-style: normal; font-size: 11px;">Upload Backup</label><input type="file" id="settings-restore-file" class="hidden canva-input" accept=".json" onchange="window.handleRestoreData(event); window.toggleSettingsMenu()" data-html-import-id="html-import-176" data-template-id="input-104" style="color: rgb(30, 41, 59);">
+        <div class="flex flex-col gap-2" data-html-import-id="html-import-173">
+         <button type="button" onclick="window.handleBackupData(); window.toggleSettingsMenu()" class="w-full px-2 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold hover:bg-emerald-100 canva-button" data-html-import-id="html-import-174" data-template-id="button-102" style="background: rgb(236, 253, 245); color: rgb(4, 120, 87); font-weight: 700; font-style: normal; font-size: 11px;">Download Backup</button><label for="settings-restore-file" class="w-full px-2 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold hover:bg-amber-100 text-center cursor-pointer canva-text" data-html-import-id="html-import-175" data-template-id="label-103" style="background: rgb(255, 251, 235); color: rgb(180, 83, 9); font-weight: 700; font-style: normal; font-size: 11px;">Upload Backup</label><input type="file" id="settings-restore-file" class="hidden canva-input" accept=".json" onchange="window.handleRestoreData(event); window.toggleSettingsMenu()" data-html-import-id="html-import-176" data-template-id="input-104" style="color: rgb(30, 41, 59);">
         </div>
        </div>
       </section>
      </div>
     </aside><!-- Main Content Container -->
-    <main id="dashboard-main" class="flex-grow md:ml-64 px-4 sm:px-6 lg:px-8 py-8 w-full" data-html-import-id="html-import-177"><button id="sidebar-reopen" type="button" onclick="window.toggleFacilitatorSidebar()" aria-label="Tampilkan sidebar" class="fixed left-4 top-20 z-40 items-center justify-center w-10 h-10 rounded-xl border border-gold-500/30 bg-white text-gold-600 shadow-md hover:bg-gold-100 transition-colors canva-button" data-html-import-id="html-import-178" data-template-id="button-105" style="background: rgb(255, 255, 255); color: rgb(170, 136, 23);">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" data-html-import-id="html-import-179">
-       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" data-html-import-id="html-import-180"></path>
+    <main id="dashboard-main" class="flex-grow md:ml-64 px-4 sm:px-6 lg:px-8 py-8 w-full" data-html-import-id="html-import-177">
+     <button id="sidebar-reopen" type="button" onclick="window.toggleFacilitatorSidebar()" aria-label="Tampilkan sidebar" class="fixed left-4 top-20 z-40 items-center justify-center w-10 h-10 rounded-xl border border-gold-500/30 bg-white text-gold-600 shadow-md hover:bg-gold-100 transition-colors canva-button" data-html-import-id="html-import-178" data-template-id="button-105" style="background: rgb(255, 255, 255); color: rgb(170, 136, 23);">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" data-html-import-id="html-import-179"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" data-html-import-id="html-import-180"></path>
       </svg></button> <!-- Stats Overview Bar -->
-     <div id="stats-overview" class="mb-8 grid grid-cols-2 md:grid-cols-4 gap-4" data-html-import-id="html-import-181"><!-- Dynamic Stat Cards injected here -->
+     <div id="stats-overview" class="mb-8 grid grid-cols-2 md:grid-cols-4 gap-4" data-html-import-id="html-import-181">
+      <!-- Dynamic Stat Cards injected here -->
      </div><!-- Dynamic Main Content Area -->
      <div id="content-area" data-html-import-id="html-import-182"></div>
     </main><!-- Dashboard Footer -->
@@ -417,7 +433,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         // Global Firebase Configuration Setup
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'pkgsd-mbi-lms-v2';
@@ -1782,10 +1798,17 @@
                 btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Mengunggah...</span>`;
                 btn.disabled = true;
                 
-                const fileData = await uploadFile(fileInput.files[0], 'assignments');
-                if (fileData) {
-                    fileUrl = fileData.url;
-                    fileName = fileData.name;
+                try {
+                    const fileData = await uploadFile(fileInput.files[0], 'assignments');
+                    if (fileData) {
+                        fileUrl = fileData.url;
+                        fileName = fileData.name;
+                    }
+                } catch (uploadError) {
+                    window.showToast(uploadError.message || 'Unggah tugas gagal.', 'error');
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                    return;
                 }
             } else {
                 if (!answer) {
@@ -2092,34 +2115,30 @@
         const uploadFile = async (file, folder) => {
             if (!file) return null;
             
-            if (!storage || firebaseConfig.storageBucket === "mock.appspot.com") {
-                return new Promise((resolve) => {
-                    setTimeout(() => {
-                        if (file.type.startsWith('image/')) {
-                            resolve({ url: `https://placehold.co/800x400/0B1E36/FFFBEA?text=Gambar+Materi:+${encodeURIComponent(file.name)}`, name: file.name });
-                        } else if (file.type.startsWith('video/')) {
-                            resolve({ url: 'https://www.w3schools.com/html/mov_bbb.mp4', name: file.name }); 
-                        } else if (file.type.startsWith('audio/')) {
-                            resolve({ url: 'https://www.w3schools.com/html/horse.mp3', name: file.name });
-                        } else {
-                            resolve({ url: `https://example.com/mock-download/${encodeURIComponent(file.name)}`, name: file.name });
-                        }
-                    }, 1500);
-                });
+            if (!storage || !firebaseConfig.storageBucket || firebaseConfig.storageBucket === "mock.appspot.com") {
+                throw new Error('Firebase Storage belum dikonfigurasi. Periksa storageBucket, aturan Storage, dan koneksi Firebase.');
             }
 
             try {
-                const fileRef = ref(storage, `artifacts/${appId}/${folder}/${Date.now()}_${file.name}`);
-                const uploadPromise = (async () => {
-                    await uploadBytes(fileRef, file);
-                    const url = await getDownloadURL(fileRef);
-                    return { url, name: file.name };
-                })();
-                // Biarkan unggahan Firebase selesai untuk berkas besar; timeout pendek dapat memutus unggahan yang sebenarnya masih berjalan.
-                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Unggah terlalu lama. Periksa koneksi lalu coba lagi.')), 120000));
-                return await Promise.race([uploadPromise, timeoutPromise]);
+                const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                const fileRef = ref(storage, `artifacts/${appId}/${folder}/${Date.now()}_${safeName}`);
+                const uploadResult = await new Promise((resolve, reject) => {
+                    const task = uploadBytesResumable(fileRef, file, { contentType: file.type || 'application/octet-stream' });
+                    task.on('state_changed', snapshot => {
+                        const percent = snapshot.totalBytes ? Math.round(snapshot.bytesTransferred / snapshot.totalBytes * 100) : 0;
+                        window.showToast(`Mengunggah ${file.name}: ${percent}%`, 'info');
+                    }, error => reject(error), async () => {
+                        try { resolve(await getDownloadURL(task.snapshot.ref)); } catch (error) { reject(error); }
+                    });
+                });
+                return { url: uploadResult, name: file.name };
             } catch (e) {
-                throw new Error(`Berkas gagal diunggah: ${e.message || 'periksa koneksi dan coba lagi'}`);
+                const code = e?.code || '';
+                const detail = code.includes('unauthorized') || code.includes('permission-denied')
+                    ? 'Aturan Firebase Storage menolak unggahan.'
+                    : code.includes('storage/unknown') ? 'Firebase Storage belum aktif atau storageBucket tidak sesuai.'
+                    : 'Periksa koneksi dan pengaturan Firebase Storage.';
+                throw new Error(`${detail} (${e.message || code || 'unggah gagal'})`);
             }
         };
 
@@ -2218,12 +2237,19 @@
                 if (mediaFile) {
                     btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Uploading Media...</span>`;
                     btn.disabled = true;
-                    const res = await uploadFile(mediaFile, 'media');
-                    if (res) {
-                        mediaUrl = res.url;
-                        if (mediaFile.type.startsWith('video/')) mediaType = 'video';
-                        else if (mediaFile.type.startsWith('audio/')) mediaType = 'audio';
-                        else mediaType = 'image';
+                    try {
+                        const res = await uploadFile(mediaFile, 'media');
+                        if (res) {
+                            mediaUrl = res.url;
+                            if (mediaFile.type.startsWith('video/')) mediaType = 'video';
+                            else if (mediaFile.type.startsWith('audio/')) mediaType = 'audio';
+                            else mediaType = 'image';
+                        }
+                    } catch (uploadError) {
+                        btn.innerHTML = originalBtnHtml;
+                        btn.disabled = false;
+                        window.showToast(uploadError.message || 'Unggah media gagal.', 'error');
+                        return;
                     }
                 } else if (existingMat && existingMat.type === 'manual') {
                     mediaUrl = existingMat.mediaUrl || existingMat.imageUrl;
