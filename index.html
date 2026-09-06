@@ -1998,8 +1998,6 @@
 
                     <div class="space-y-4">
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <input type="number" id="mat-unit-order" min="1" placeholder="Unit Order (1, 2, 3...)" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm font-semibold text-navy-900 bg-gold-50/50">
-                            <input type="text" id="mat-unit" placeholder="Material Focus / Unit (Example: Unit 1 - Pedagogical Foundations)" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm font-semibold text-navy-900 bg-gold-50/50 sm:col-span-2">
                             <div class="sm:col-span-3 p-3.5 bg-gold-50/50 rounded-xl border border-gold-300 space-y-3">
                                 <div class="mb-3 rounded-lg border border-gold-300 bg-gold-100/60 p-3 text-[11px] leading-relaxed text-slate-600"><strong class="text-navy-900">Panduan pengisian materi:</strong> isi <b>Unit Order</b> dan nama unit secara berurutan agar modul tampil rapi. Pilih <b>Main</b> untuk judul unit utama yang menjadi halaman induk. Pilih <b>Sub</b> atau <b>Child</b> hanya jika materi berada di bawah Main, lalu pilih induknya. Gunakan tampilan <b>Navibar</b> agar submateri muncul sebagai tab di bawah materi utama, atau <b>Halaman terpisah</b> jika ingin dibuka sendiri. Isi <b>Title Order</b> sesuai urutan, tulis ringkasan singkat pada deskripsi, pilih kelas sasaran, lalu lengkapi isi materi dengan tujuan pembelajaran, konsep utama, langkah kegiatan, contoh, latihan, dan penutup. Gunakan format teks, tabel, serta media pendukung hanya jika membantu peserta memahami materi.</div><label for="mat-title-level" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Status judul materi</label>
                                 <select id="mat-title-level" onchange="window.updateParentTitleOptions()" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm font-semibold text-navy-900 bg-white">
@@ -2241,8 +2239,6 @@
         window.resetMaterialForm = () => {
             state.editingMaterialId = null;
             document.getElementById('form-materi-title').textContent = 'New Learning Module';
-            document.getElementById('mat-unit-order').value = '';
-            document.getElementById('mat-unit').value = '';
             document.getElementById('mat-title-level').value = 'main';
             document.getElementById('mat-parent-title').value = '';
             document.getElementById('mat-main-display').value = 'separate';
@@ -2271,8 +2267,6 @@
             document.getElementById('form-materi-title').textContent = 'Edit Learning Module';
             document.getElementById('btn-save-mat').innerHTML = '<span>Update Module</span>';
             
-            document.getElementById('mat-unit-order').value = mat.unitOrder || '';
-            document.getElementById('mat-unit').value = mat.unit || '';
             document.getElementById('mat-title-level').value = mat.titleLevel || 'main';
             window.updateParentTitleOptions();
             document.getElementById('mat-parent-title').value = mat.parentTitle || '';
@@ -2300,8 +2294,8 @@
         window.saveMaterial = async () => {
             if (!state.user) return;
             const type = document.querySelector('input[name="mat-type"]:checked').value;
-            const unitOrder = Number(document.getElementById('mat-unit-order').value) || 9999;
-            const unit = document.getElementById('mat-unit').value.trim();
+            const unitOrder = 9999;
+            const unit = '';
             const titleLevel = document.getElementById('mat-title-level').value;
             const parentTitle = document.getElementById('mat-parent-title').value.trim();
             const mainDisplay = document.getElementById('mat-main-display').value;
@@ -2494,12 +2488,12 @@
                     <div class="space-y-4">
                         <div>
                             <label for="task-location" class="block text-xs font-bold text-navy-900 uppercase tracking-wider mb-2">Letak Kuis / Tugas</label>
-                            <select id="task-location" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm font-semibold text-navy-900 bg-gold-50/50">
+                            <select id="task-location" onchange="window.syncTaskTitleFromLocation()" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm font-semibold text-navy-900 bg-gold-50/50">
                                 <option value="">Pilih materi tempat kuis diletakkan</option>
                             </select>
-                            <p class="text-[11px] text-slate-500 mt-1">Pilih satu materi utama atau submateri sebagai lokasi kuis.</p>
+                            <p class="text-[11px] text-slate-500 mt-1">Pilih materi; judul dan urutan materi digunakan otomatis untuk tugas atau kuis terkait.</p>
                         </div>
-                        <input type="text" id="task-title" placeholder="Judul Tugas / Kuis" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm">
+                        <input type="text" id="task-title" placeholder="Judul tugas mengikuti materi terpilih" readonly class="w-full p-3.5 border border-slate-300 rounded-xl bg-slate-50 text-slate-600 text-sm">
                         <fieldset id="task-class" aria-label="Kelas sasaran kuis" class="w-full p-3.5 border border-slate-300 rounded-xl text-sm grid grid-cols-2 gap-2"><legend class="col-span-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kelas sasaran kuis</legend><label class="flex items-center gap-2"><input type="checkbox" name="task-class" value="All Grades" class="w-4 h-4 text-gold-500">All Grades</label><label class="flex items-center gap-2"><input type="checkbox" name="task-class" value="3rd Grade" class="w-4 h-4 text-gold-500">3rd Grade</label><label class="flex items-center gap-2"><input type="checkbox" name="task-class" value="4th Grade" class="w-4 h-4 text-gold-500">4th Grade</label><label class="flex items-center gap-2"><input type="checkbox" name="task-class" value="5th Grade" class="w-4 h-4 text-gold-500">5th Grade</label><label class="flex items-center gap-2"><input type="checkbox" name="task-class" value="6th Grade" class="w-4 h-4 text-gold-500">6th Grade</label></fieldset>
                         <div class="rich-toolbar" data-editor="task-desc"><select aria-label="Font instruksi tugas" onchange="window.formatRichText('fontName', this.value)"><option value="Inter">Inter</option><option value="Merriweather">Merriweather</option><option value="Georgia">Georgia</option></select><select aria-label="Ukuran teks instruksi tugas" onchange="window.formatRichText('fontSize', this.value)"><option value="3">Normal</option><option value="4">Besar</option><option value="5">Lebih besar</option><option value="6">Judul</option></select><button type="button" onclick="window.formatRichText('bold')"><b>B</b></button><button type="button" onclick="window.formatRichText('italic')"><i>I</i></button><button type="button" onclick="window.formatRichText('underline')"><u>U</u></button><button type="button" onclick="window.formatRichText('justifyLeft')">Kiri</button><button type="button" onclick="window.formatRichText('justifyCenter')">Tengah</button><button type="button" onclick="window.formatRichText('justifyRight')">Kanan</button><button type="button" onclick="window.formatRichText('justifyFull')">Rata kanan-kiri</button><button type="button" onclick="window.formatRichText('insertUnorderedList')">• Bullet</button><button type="button" onclick="window.formatRichText('insertOrderedList')">1. Numbering</button><label class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">Baris <select class="table-rows" aria-label="Jumlah baris tabel"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option></select></label><label class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">Kolom <select class="table-cols" aria-label="Jumlah kolom tabel"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option></select></label><label class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">Warna <select class="table-color" aria-label="Warna tabel"><option value="#ffffff">Putih</option><option value="#fffbeA">Krem</option><option value="#f0f4f8">Biru muda</option><option value="#ecfdf5">Hijau muda</option><option value="#fef2f2">Merah muda</option><option value="#fef3c7">Kuning muda</option></select></label><button type="button" onclick="window.formatRichText('insertTable')">▦ Sisipkan Tabel</button></div><div id="task-desc" contenteditable="true" data-placeholder="Instruksi Pengerjaan Tugas..." class="rich-editor w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm"></div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2628,6 +2622,16 @@
                     return `<option value="${escapeAttribute(value)}">${prefix}${material.title}${material.unit ? ` — ${material.unit}` : ''}</option>`;
                 }).join('');
             locationSelect.value = materials.some(material => `${material.unit || ''}::${material.title}` === currentValue) ? currentValue : '';
+        };
+
+        window.syncTaskTitleFromLocation = () => {
+            const location = document.getElementById('task-location')?.value || '';
+            const separatorIndex = location.indexOf('::');
+            const unit = separatorIndex >= 0 ? location.slice(0, separatorIndex) : '';
+            const title = separatorIndex >= 0 ? location.slice(separatorIndex + 2) : '';
+            const material = state.materials.find(item => item.unit === unit && item.title === title);
+            const titleInput = document.getElementById('task-title');
+            if (titleInput) titleInput.value = material?.title || '';
         };
 
         window.toggleQuestionOptions = (select) => {
