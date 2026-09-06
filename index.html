@@ -375,7 +375,7 @@
                             En
                         </div>
        <div data-html-import-id="html-import-146">
-        <h1 class="text-white font-serif font-bold text-base leading-tight canva-text canva-text canva-text" data-html-import-id="html-import-147" data-template-id="h1-89" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 32px;">PKGSD-MBI Kab. Wonosobo</h1><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-gold-500/20 text-gold-300 border border-gold-500/30 canva-text canva-text canva-text" id="user-role-display" data-html-import-id="html-import-148" data-template-id="span-90" style="background: rgba(212, 175, 55, 0.2); color: rgb(252, 229, 136); font-weight: 600; font-style: normal; font-size: 10px;">
+        <h1 class="text-white font-serif font-bold text-base leading-tight canva-text canva-text canva-text" data-html-import-id="html-import-147" data-template-id="h1-89" style="color: rgb(255, 255, 255); font-weight: 700; font-style: normal; font-size: 32px;">PKGSD-MBI LMS</h1><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-gold-500/20 text-gold-300 border border-gold-500/30 canva-text canva-text canva-text" id="user-role-display" data-html-import-id="html-import-148" data-template-id="span-90" style="background: rgba(212, 175, 55, 0.2); color: rgb(252, 229, 136); font-weight: 600; font-style: normal; font-size: 10px;">
                                 Peserta
                             </span>
        </div>
@@ -471,6 +471,19 @@
             storage = getStorage(app);
         } catch(e) {
             console.warn("Firebase initialization skipped or mock mode active", e);
+        }
+
+        function normalizeClassList(value) {
+            if (Array.isArray(value)) return value.map(item => String(item).trim()).filter(Boolean);
+            return String(value || '').split(',').map(item => item.trim()).filter(Boolean);
+        }
+        function classMatchesAudience(value, selectedClass) {
+            const classes = normalizeClassList(value).map(item => item.toLowerCase());
+            return !classes.length || classes.includes('all grades') || classes.includes('semua kelas') || classes.includes(String(selectedClass || '').trim().toLowerCase());
+        }
+        function readSelectedClasses(id) {
+            const field = document.getElementById(id);
+            return [...(field?.querySelectorAll('input[type="checkbox"]:checked') || [])].map(input => input.value).filter(Boolean);
         }
 
         // Global Application State
@@ -853,7 +866,7 @@
                     .forEach(material => {
                         tabs.push({ id: `material:${material.id}`, label: material.title, icon: '📖' });
                         state.assignments
-                            .filter(task => (!state.profile?.className || !task.className || ['semua kelas', 'all grades'].includes(task.className.trim().toLowerCase()) || task.className.trim() === state.profile.className.trim()) && (task.parentTitle === material.title || (!task.parentTitle && task.unit === material.unit)))
+                            .filter(task => classMatchesAudience(task.className, state.profile?.className) && (task.parentTitle === material.title || (!task.parentTitle && task.unit === material.unit)))
                             .sort((a, b) => (Number(a.titleOrder) || 9999) - (Number(b.titleOrder) || 9999) || (b.createdAt || 0) - (a.createdAt || 0))
                             .forEach(task => tabs.push({ id: `assignment:${task.id}`, label: task.title, icon: '📝' }));
                     });
@@ -1482,7 +1495,7 @@
                 // sehingga tidak memenuhi daftar awal peserta.
                 ...state.materials
                     .filter(m => (m.titleLevel || 'main') === 'main')
-                    .filter(m => !state.profile?.className || !m.className || ['semua kelas', 'all grades'].includes(m.className.trim().toLowerCase()) || m.className.trim() === state.profile.className.trim())
+                    .filter(m => classMatchesAudience(m.className, state.profile?.className))
                     .map(m => ({ ...m, itemType: 'material' })),
             ];
 
@@ -2017,7 +2030,7 @@
                             <input type="number" id="mat-title-order" min="1" placeholder="Title Order (1, 2, 3...)" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm font-semibold text-navy-900 bg-gold-50/50">
                             <input type="text" id="mat-title" placeholder="Module Title (Example: Module 1 - Teaching Vocabulary)" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm sm:col-span-2">
                         <input type="text" id="mat-desc" placeholder="Brief Module Summary..." class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm">
-                            <select id="mat-class" aria-label="Kelas sasaran materi" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm"><option value="All Grades">All Grades</option><option value="3rd Grade">3rd Grade</option><option value="4th Grade">4th Grade</option><option value="5th Grade">5th Grade</option><option value="6th Grade">6th Grade</option></select>
+                            <fieldset id="mat-class" aria-label="Kelas sasaran materi" class="w-full p-3.5 border border-slate-300 rounded-xl text-sm grid grid-cols-2 gap-2"><legend class="col-span-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kelas sasaran materi</legend><label class="flex items-center gap-2"><input type="checkbox" name="mat-class" value="All Grades" class="w-4 h-4 text-gold-500">All Grades</label><label class="flex items-center gap-2"><input type="checkbox" name="mat-class" value="3rd Grade" class="w-4 h-4 text-gold-500">3rd Grade</label><label class="flex items-center gap-2"><input type="checkbox" name="mat-class" value="4th Grade" class="w-4 h-4 text-gold-500">4th Grade</label><label class="flex items-center gap-2"><input type="checkbox" name="mat-class" value="5th Grade" class="w-4 h-4 text-gold-500">5th Grade</label><label class="flex items-center gap-2"><input type="checkbox" name="mat-class" value="6th Grade" class="w-4 h-4 text-gold-500">6th Grade</label></fieldset>
                         </div>
                         
                         <div id="mat-manual-section" class="space-y-4 transition-all block">
@@ -2241,7 +2254,7 @@
             document.getElementById('mat-title-order').value = '';
             document.getElementById('mat-title').value = '';
             document.getElementById('mat-desc').value = '';
-            document.getElementById('mat-class').value = 'All Grades';
+            [...document.querySelectorAll('#mat-class input[type="checkbox"]')].forEach(input => { input.checked = input.value === 'All Grades'; });
             document.getElementById('mat-content').innerHTML = '';
             document.getElementById('mat-media').value = '';
             document.getElementById('mat-file').value = '';
@@ -2272,7 +2285,8 @@
             document.getElementById('mat-title-order').value = mat.titleOrder || '';
             document.getElementById('mat-title').value = mat.title || '';
             document.getElementById('mat-desc').value = mat.description || '';
-            document.getElementById('mat-class').value = mat.className || '';
+            const materialClasses = normalizeClassList(mat.className);
+            [...document.querySelectorAll('#mat-class input[type="checkbox"]')].forEach(input => { input.checked = materialClasses.includes(input.value); });
             
             const radios = document.getElementsByName('mat-type');
             for (let r of radios) {
@@ -2299,7 +2313,7 @@
             const titleOrder = Number(document.getElementById('mat-title-order').value) || 9999;
             const title = document.getElementById('mat-title').value.trim();
             const desc = document.getElementById('mat-desc').value.trim();
-            const className = document.getElementById('mat-class').value.trim() || 'Semua Kelas';
+            const className = readSelectedClasses('mat-class');
             const btn = document.getElementById('btn-save-mat');
             const originalBtnHtml = btn.innerHTML;
 
@@ -2491,7 +2505,7 @@
                             <p class="text-[11px] text-slate-500 mt-1">Pilih satu materi utama atau submateri sebagai lokasi kuis.</p>
                         </div>
                         <input type="text" id="task-title" placeholder="Judul Tugas / Kuis" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm">
-                        <select id="task-class" aria-label="Kelas sasaran kuis" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm"><option value="All Grades">All Grades</option><option value="3rd Grade">3rd Grade</option><option value="4th Grade">4th Grade</option><option value="5th Grade">5th Grade</option><option value="6th Grade">6th Grade</option></select>
+                        <fieldset id="task-class" aria-label="Kelas sasaran kuis" class="w-full p-3.5 border border-slate-300 rounded-xl text-sm grid grid-cols-2 gap-2"><legend class="col-span-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kelas sasaran kuis</legend><label class="flex items-center gap-2"><input type="checkbox" name="task-class" value="All Grades" class="w-4 h-4 text-gold-500">All Grades</label><label class="flex items-center gap-2"><input type="checkbox" name="task-class" value="3rd Grade" class="w-4 h-4 text-gold-500">3rd Grade</label><label class="flex items-center gap-2"><input type="checkbox" name="task-class" value="4th Grade" class="w-4 h-4 text-gold-500">4th Grade</label><label class="flex items-center gap-2"><input type="checkbox" name="task-class" value="5th Grade" class="w-4 h-4 text-gold-500">5th Grade</label><label class="flex items-center gap-2"><input type="checkbox" name="task-class" value="6th Grade" class="w-4 h-4 text-gold-500">6th Grade</label></fieldset>
                         <div class="rich-toolbar" data-editor="task-desc"><select aria-label="Font instruksi tugas" onchange="window.formatRichText('fontName', this.value)"><option value="Inter">Inter</option><option value="Merriweather">Merriweather</option><option value="Georgia">Georgia</option></select><select aria-label="Ukuran teks instruksi tugas" onchange="window.formatRichText('fontSize', this.value)"><option value="3">Normal</option><option value="4">Besar</option><option value="5">Lebih besar</option><option value="6">Judul</option></select><button type="button" onclick="window.formatRichText('bold')"><b>B</b></button><button type="button" onclick="window.formatRichText('italic')"><i>I</i></button><button type="button" onclick="window.formatRichText('underline')"><u>U</u></button><button type="button" onclick="window.formatRichText('justifyLeft')">Kiri</button><button type="button" onclick="window.formatRichText('justifyCenter')">Tengah</button><button type="button" onclick="window.formatRichText('justifyRight')">Kanan</button><button type="button" onclick="window.formatRichText('justifyFull')">Rata kanan-kiri</button><button type="button" onclick="window.formatRichText('insertUnorderedList')">• Bullet</button><button type="button" onclick="window.formatRichText('insertOrderedList')">1. Numbering</button><label class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">Baris <select class="table-rows" aria-label="Jumlah baris tabel"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option></select></label><label class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">Kolom <select class="table-cols" aria-label="Jumlah kolom tabel"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="8">8</option><option value="10">10</option></select></label><label class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">Warna <select class="table-color" aria-label="Warna tabel"><option value="#ffffff">Putih</option><option value="#fffbeA">Krem</option><option value="#f0f4f8">Biru muda</option><option value="#ecfdf5">Hijau muda</option><option value="#fef2f2">Merah muda</option><option value="#fef3c7">Kuning muda</option></select></label><button type="button" onclick="window.formatRichText('insertTable')">▦ Sisipkan Tabel</button></div><div id="task-desc" contenteditable="true" data-placeholder="Instruksi Pengerjaan Tugas..." class="rich-editor w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm"></div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div><label for="task-timer-mode" class="block text-xs font-bold text-navy-900 uppercase tracking-wider mb-2">Mode Waktu Kuis</label><select id="task-timer-mode" class="w-full p-3.5 border border-slate-300 rounded-xl text-sm"><option value="countdown">Hitung mundur</option><option value="elapsed">Hitung lama mengerjakan</option></select></div>
@@ -2689,7 +2703,8 @@
             window.updateTaskTitleOptions();
             document.getElementById('task-location').value = `${savedTaskUnit}::${savedTaskParentTitle}`;
             document.getElementById('task-title').value = task.title || '';
-            document.getElementById('task-class').value = task.className || 'All Grades';
+            const taskClasses = normalizeClassList(task.className);
+            [...document.querySelectorAll('#task-class input[type="checkbox"]')].forEach(input => { input.checked = taskClasses.includes(input.value); });
             document.getElementById('task-timer-mode').value = task.timerMode || 'countdown';
             document.getElementById('task-time-limit').value = Math.max(1, Math.round((Number(task.timeLimit) || 1800) / 60));
             document.getElementById('task-attempt-mode').value = task.attemptMode || 'once';
@@ -2725,7 +2740,7 @@
                 window.showToast('Pilih materi tempat kuis diletakkan.', 'error');
                 return;
             }
-            const className = document.getElementById('task-class').value.trim() || 'Semua Kelas';
+            const className = readSelectedClasses('task-class');
             const questions = [...document.querySelectorAll('#task-questions .task-question')].map(item => ({ question: item.querySelector('.task-question-text').value.trim(), type: item.querySelector('.task-question-type').value, options: [...item.querySelectorAll('.task-question-option')].map(option => option.value.trim()).filter(Boolean), answerKey: item.querySelector('.task-question-key').value.trim(), maxScore: Number(item.querySelector('.task-question-score').value) || 0, autoGrade: item.querySelector('.task-question-auto').checked, mediaName: item.querySelector('.task-question-media')?.files[0]?.name || '' })).filter(item => item.question);
             const desc = document.getElementById('task-desc').innerHTML.trim();
             const deadline = document.getElementById('task-deadline').value;
