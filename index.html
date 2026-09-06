@@ -74,7 +74,7 @@
         #sidebar-reopen { display: none; }
         #dashboard-view.sidebar-collapsed #sidebar-reopen { display: inline-flex; }
         #facilitator-sidebar { transition: transform .25s ease; }
-        #dashboard-main { width: calc(100% - 16rem); margin-left: 16rem; transition: width .25s ease, margin-left .25s ease; }
+        #dashboard-main { width: calc(100% - 16rem); margin-left: 16rem; transition: width .25s ease, margin-left .25s ease; min-height: calc(100 * min(var(--vh, 1vh), 1vh) - 4rem); }
         @media (max-width: 767px) {
             #facilitator-sidebar { width: min(18rem, 86vw); }
             #dashboard-main { width: 100%; margin-left: 0 !important; }
@@ -119,7 +119,7 @@
             #certificate-preview { position: fixed; inset: 0; width: 100vw; height: 100vh; box-shadow: none; }
         }
         /* Responsive and touch-friendly layout helpers */
-        html, body { width: 100%; min-width: 0; overflow-x: hidden; }
+        html, body { width: 100%; min-width: 0; overflow-x: hidden; min-height: calc(100 * min(var(--vh, 1vh), 1vh)); }
         input, textarea, select, button { max-width: 100%; }
         @media (max-width: 640px) {
             .rich-toolbar { gap: 4px; padding: 6px; }
@@ -1398,7 +1398,7 @@
                 // Materi subjudul dengan tampilan navbar dibuka dari judul utama,
                 // sehingga tidak memenuhi daftar awal peserta.
                 ...state.materials
-                    .filter(m => (m.titleLevel || 'main') === 'main' || m.unitDisplay !== 'navbar')
+                    .filter(m => (m.titleLevel || 'main') === 'main' || (m.unitDisplay !== 'navbar' && m.mainDisplay !== 'navbar'))
                     .filter(m => !state.profile?.className || !m.className || m.className.trim().toLowerCase() === 'semua kelas' || m.className.trim() === state.profile.className.trim())
                     .map(m => ({ ...m, itemType: 'material' })),
                 ...state.assignments.filter(a => !state.profile?.className || !a.className || a.className.trim().toLowerCase() === 'semua kelas' || a.className.trim() === state.profile.className.trim()).map(a => {
@@ -1622,11 +1622,14 @@
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         </div>
                         <h4 class="text-lg font-bold text-navy-900 mb-2">${mat.fileName || 'Dokumen Terlampir'}</h4>
-                        <p class="text-xs text-slate-500 mb-6">Klik tombol di bawah untuk mengunduh atau membuka dokumen materi ini secara langsung.</p>
-                        <a href="${mat.fileUrl || '#'}" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 navy-gradient text-white font-bold text-sm rounded-xl shadow-md hover:opacity-90 transition-all">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                            Buka / Unduh Dokumen
-                        </a>
+                        <p class="text-xs text-slate-500 mb-6">Pratinjau materi ditampilkan langsung di bawah ini.</p>
+                        ${mat.fileUrl ? `<div class="w-full rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm mb-6">
+                            ${(mat.fileType?.startsWith('image/') || /\.(jpe?g|png|gif|webp)(\?|$)/i.test(mat.fileName || mat.fileUrl)) ? `<img src="${mat.fileUrl}" alt="Pratinjau ${mat.fileName || 'materi'}" class="w-full max-h-[38rem] object-contain">` : `<iframe src="${mat.fileUrl}" title="Pratinjau ${mat.fileName || 'dokumen materi'}" class="w-full h-[38rem] bg-white"></iframe>`}
+                        </div>
+                        <a href="${mat.fileUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-6 py-3 navy-gradient text-white font-bold text-sm rounded-xl shadow-md hover:opacity-90 transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-3-7h5v5m-5-5l-6 6"></path></svg>
+                            Buka di Tab Baru
+                        </a>` : '<p class="text-sm text-rose-600">Pratinjau dokumen belum tersedia.</p>'}
                     </div>
                 `;
             } else {
@@ -1660,13 +1663,26 @@
                     material.title === (mat.parentTitle || mat.title)
                 );
             const mainTitle = mainMaterial?.title || mat.title;
+            const navbarMaterials = mainMaterial
+                ? orderedMaterials.filter(material =>
+                    (material.unit || 'Fokus Materi Umum') === currentUnitName &&
+                    (material.titleLevel || 'main') !== 'main' &&
+                    (material.mainDisplay === 'navbar' || material.unitDisplay === 'navbar') &&
+                    (material.parentTitle === mainTitle || material.id === mat.id)
+                )
+                : [];
+            const combinedNavbarContent = mainMaterial && mainMaterial.id === mat.id
+                ? navbarMaterials.map(material => `<section class="mt-8 pt-8 border-t border-slate-200"><h3 class="text-lg font-serif font-bold text-navy-800 mb-4">${material.title}</h3><div class="prose max-w-none text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">${material.content || material.description || ''}</div></section>`).join('')
+                : '';
             const mainContentHtml = mainMaterial && mainMaterial.id !== mat.id
-                ? `<div class="mb-8 pb-8 border-b border-slate-200"><div class="prose max-w-none text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">${mainMaterial.content || mainMaterial.description || ''}</div></div>`
-                : contentHtml;
+                ? `<div class="mb-8 pb-8 border-b border-slate-200"><div class="prose max-w-none text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">${mainMaterial.content || mainMaterial.description || ''}</div>${combinedNavbarContent}</div>`
+                : (mainMaterial && mainMaterial.id === mat.id ? `${contentHtml}${combinedNavbarContent}` : contentHtml);
             const activeContentHtml = mainMaterial && mainMaterial.id === mat.id ? '' : contentHtml;
+            // Submateri navbar dirender sekali di bawah materi utama; halaman submateri tetap dapat dibuka langsung.
             const sameUnitMaterials = orderedMaterials.filter(material =>
                 (material.unit || 'Fokus Materi Umum') === currentUnitName &&
                 (material.titleLevel || 'main') !== 'main' &&
+                (material.mainDisplay === 'navbar' || material.unitDisplay === 'navbar') &&
                 (material.parentTitle === mainTitle || material.id === mat.id)
             );
             const unitTabsHtml = sameUnitMaterials.map((material, tabIndex) => {
@@ -1863,7 +1879,7 @@
                         </label>
                         <label class="flex items-center gap-2 text-xs font-bold text-navy-900 cursor-pointer">
                             <input type="radio" name="mat-type" value="document" onchange="window.toggleMatType()" class="text-gold-500 focus:ring-gold-500 w-4 h-4"> 
-                            📎 Import Document File (PDF/Word/PPT)
+                            📎 Import Document or Image File (PDF/Word/PPT/Image)
                         </label>
                     </div>
 
@@ -1872,22 +1888,23 @@
                             <input type="number" id="mat-unit-order" min="1" placeholder="Unit Order (1, 2, 3...)" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm font-semibold text-navy-900 bg-gold-50/50">
                             <input type="text" id="mat-unit" placeholder="Material Focus / Unit (Example: Unit 1 - Pedagogical Foundations)" class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm font-semibold text-navy-900 bg-gold-50/50 sm:col-span-2">
                             <div class="sm:col-span-3 p-3.5 bg-gold-50/50 rounded-xl border border-gold-300 space-y-3">
-                                <label for="mat-title-level" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Title Level</label>
+                                <div class="mb-3 rounded-lg border border-gold-300 bg-gold-100/60 p-3 text-[11px] leading-relaxed text-slate-600"><strong class="text-navy-900">Pedoman pengisian:</strong> pilih <b>Main</b> untuk judul unit utama yang menjadi halaman induk. Pilih <b>Sub</b> atau <b>Child</b> hanya jika materi berada di bawah Main, lalu pilih induknya dan gunakan tampilan <b>Navibar</b> agar muncul satu kali di bawah materi utama. Isi materi dengan ringkasan yang jelas, tujuan, langkah pembelajaran, contoh, dan penutup.</div><label for="mat-title-level" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Status judul materi</label>
                                 <select id="mat-title-level" onchange="window.updateParentTitleOptions()" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm font-semibold text-navy-900 bg-white">
-                                    <option value="main">Main title</option>
-                                    <option value="sub">Continue main title (subtitle)</option>
-                                    <option value="child">Continue subtitle (child title)</option>
+                                    <option value="main">Materi utama (main)</option>
+                                    <option value="sub">Sub materi dari judul utama</option>
+                                    <option value="child">Sub materi lanjutan</option>
                                 </select>
-                                <label for="mat-parent-title" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Continue from title</label>
+                                <label for="mat-parent-title" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Induk materi</label>
                                 <select id="mat-parent-title" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm bg-white">
                                     <option value="">Select main title</option>
                                 </select>
                                 <div id="mat-main-display-wrap">
-                                    <label for="mat-main-display" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Display under main title</label>
+                                    <label for="mat-main-display" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Tampilan sub materi</label>
                                     <select id="mat-main-display" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-navy-800 text-sm font-semibold text-navy-900 bg-white">
-                                        <option value="separate">Separate material</option>
-                                        <option value="navbar">Navigation tabs per main title</option>
+                                        <option value="separate">Halaman terpisah</option>
+                                        <option value="navbar">Navibar di bawah materi utama</option>
                                     </select>
+                                    <p class="text-[10px] text-slate-500">Navibar menampilkan sub materi dalam tab horizontal tepat di bawah isi materi utama.</p>
                                 </div>
                             </div>
                         </div>
@@ -1909,8 +1926,8 @@
 
                         <div id="mat-doc-section" class="space-y-4 transition-all hidden">
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Choose Material Document File (PDF, Word, PPT)</label>
-                                <input type="file" id="mat-file" accept=".pdf,.doc,.docx,.ppt,.pptx" class="w-full p-2 border border-slate-300 rounded-xl text-sm bg-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-gold-100 file:text-gold-700 hover:file:bg-gold-200 cursor-pointer">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Choose Material Document or Image File (PDF, Word, PPT, JPG, PNG, WEBP)</label>
+                                <input type="file" id="mat-file" accept=".pdf,.doc,.docx,.ppt,.pptx,image/jpeg,image/png,image/webp" class="w-full p-2 border border-slate-300 rounded-xl text-sm bg-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-gold-100 file:text-gold-700 hover:file:bg-gold-200 cursor-pointer">
                                 <p id="mat-file-hint" class="text-[10px] text-slate-400 mt-1 hidden">Leave empty to keep the current document file.</p>
                             </div>
                         </div>
@@ -2086,7 +2103,8 @@
                     const url = await getDownloadURL(fileRef);
                     return { url, name: file.name };
                 })();
-                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Upload timeout')), 30000));
+                // Biarkan unggahan Firebase selesai untuk berkas besar; timeout pendek dapat memutus unggahan yang sebenarnya masih berjalan.
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Unggah terlalu lama. Periksa koneksi lalu coba lagi.')), 120000));
                 return await Promise.race([uploadPromise, timeoutPromise]);
             } catch (e) {
                 throw new Error(`Berkas gagal diunggah: ${e.message || 'periksa koneksi dan coba lagi'}`);
@@ -2104,6 +2122,7 @@
             document.getElementById('mat-title-order').value = '';
             document.getElementById('mat-title').value = '';
             document.getElementById('mat-desc').value = '';
+            document.getElementById('mat-class').value = '';
             document.getElementById('mat-content').innerHTML = '';
             document.getElementById('mat-media').value = '';
             document.getElementById('mat-file').value = '';
@@ -2134,6 +2153,7 @@
             document.getElementById('mat-title-order').value = mat.titleOrder || '';
             document.getElementById('mat-title').value = mat.title || '';
             document.getElementById('mat-desc').value = mat.description || '';
+            document.getElementById('mat-class').value = mat.className || '';
             
             const radios = document.getElementsByName('mat-type');
             for (let r of radios) {
@@ -2207,9 +2227,17 @@
                 if (docFile) {
                     btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Uploading Document...</span>`;
                     btn.disabled = true;
-                    fileData = await uploadFile(docFile, 'documents');
+                    try {
+                        fileData = await uploadFile(docFile, 'documents');
+                        if (fileData) fileData.type = docFile.type;
+                    } catch (uploadError) {
+                        btn.innerHTML = originalBtnHtml;
+                        btn.disabled = false;
+                        window.showToast(uploadError.message || 'Gagal mengunggah dokumen.', 'error');
+                        return;
+                    }
                 } else if (existingMat && existingMat.type === 'document') {
-                    fileData = { url: existingMat.fileUrl, name: existingMat.fileName };
+                    fileData = { url: existingMat.fileUrl, name: existingMat.fileName, type: existingMat.fileType || '' };
                 }
             }
 
@@ -2233,6 +2261,7 @@
                     mediaType: mediaType,
                     fileUrl: fileData ? fileData.url : null,
                     fileName: fileData ? fileData.name : null,
+                    fileType: fileData ? (fileData.type || existingMat?.fileType || '') : null,
                     authorId: state.profile.uid
                 };
 
